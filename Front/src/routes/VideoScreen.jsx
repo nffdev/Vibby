@@ -3,14 +3,94 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus } from 'lucide-react'
+import { Input } from "@/components/ui/input"
+import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X } from 'lucide-react'
 import { cn } from "@/lib/utils"
+
+function CommentsOverlay({ onClose }) {
+  return (
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      exit={{ y: "100%" }}
+      transition={{ type: "spring", damping: 20, stiffness: 300 }}
+      className="absolute inset-x-0 bottom-0 bg-white dark:bg-gray-900 rounded-t-xl z-50 max-h-[80vh] overflow-y-auto"
+    >
+      <div className="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b flex items-center justify-between">
+        <h2 className="font-semibold text-lg">Comments</h2>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="p-4 space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="flex gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={`/placeholder.svg?${i}`} />
+              <AvatarFallback>U{i}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <p className="text-sm font-medium">User{i + 1}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Contrary to popular belief, Lorem Ipsum is not simply random text
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="sticky bottom-0 p-4 bg-white dark:bg-gray-900 border-t">
+        <Input 
+          placeholder="Add comment..." 
+          className="bg-gray-100 dark:bg-gray-800 border-0"
+        />
+      </div>
+    </motion.div>
+  )
+}
+
+function ShareOverlay({ onClose }) {
+  const shareOptions = [
+    'Share', 'Copy Link',
+  ]
+
+  return (
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      exit={{ y: "100%" }}
+      transition={{ type: "spring", damping: 20, stiffness: 300 }}
+      className="absolute inset-x-0 bottom-0 bg-white dark:bg-gray-900 rounded-t-xl z-50"
+    >
+      <div className="p-4 border-b flex items-center justify-between">
+        <h2 className="font-semibold text-lg">Share to</h2>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-4 gap-4 p-4">
+        {shareOptions.map((option, i) => (
+          <button
+            key={i}
+            className="flex flex-col items-center gap-2"
+          >
+            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-full">
+              <Share2 className="h-6 w-6" />
+            </div>
+            <span className="text-xs text-center">{option}</span>
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
 
 export default function VideoScreen() {
   const navigate = useNavigate()
   const [interaction, setInteraction] = useState(null)
   const [counts, setCounts] = useState({ likes: 15000, dislikes: 100 })
   const [showThumb, setShowThumb] = useState(false)
+  const [showComments, setShowComments] = useState(false)
+  const [showShare, setShowShare] = useState(false)
 
   const handleInteraction = useCallback((type) => {
     setInteraction((prev) => {
@@ -62,6 +142,18 @@ export default function VideoScreen() {
               <ThumbsDown className="w-32 h-32 text-red-500" />
             )}
           </motion.div>
+        )}
+
+        {showComments && (
+          <div className="absolute inset-0 bg-black/50 z-40">
+            <CommentsOverlay onClose={() => setShowComments(false)} />
+          </div>
+        )}
+
+        {showShare && (
+          <div className="absolute inset-0 bg-black/50 z-40">
+            <ShareOverlay onClose={() => setShowShare(false)} />
+          </div>
         )}
       </AnimatePresence>
 
@@ -139,14 +231,24 @@ export default function VideoScreen() {
           <span className="text-[10px] sm:text-xs mt-1">{counts.dislikes.toLocaleString()}</span>
         </Button>
 
-        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setShowComments(true)}
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent"
+        >
           <div className="bg-gray-800/40 p-1.5 sm:p-2 md:p-3 rounded-full">
             <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
           </div>
           <span className="text-[10px] sm:text-xs mt-1">456</span>
         </Button>
 
-        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setShowShare(true)}
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent"
+        >
           <div className="bg-gray-800/40 p-1.5 sm:p-2 md:p-3 rounded-full">
             <Share2 className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
           </div>
