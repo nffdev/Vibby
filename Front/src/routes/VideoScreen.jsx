@@ -1,16 +1,22 @@
 import { useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { ArrowLeft, Heart, MessageCircle, Share2, ThumbsDown, UserPlus } from 'lucide-react'
 
 export default function TikTokVideo() {
   const navigate = useNavigate()
 
   return (
-    <div className="relative h-screen w-full max-w-md mx-auto bg-gradient-to-b from-cyan-900 to-sky-400">
+    <div className="relative h-screen w-full max-w-md mx-auto bg-gradient-to-b from-cyan-900 to-sky-400 overflow-hidden">
       <div className="absolute top-4 left-4 z-10">
-        <button onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-6 w-6 text-white" />
-        </button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate(-1)} 
+          className="text-white hover:bg-white/20"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
       </div>
 
       <div className="absolute top-4 right-4 z-10">
@@ -28,41 +34,41 @@ export default function TikTokVideo() {
         />
       </div>
 
-      <div className="absolute right-4 bottom-20 flex flex-col items-center gap-6">
-        <button className="flex flex-col items-center gap-1">
-          <div className="bg-gray-800/40 p-3 rounded-full">
-            <UserPlus className="h-6 w-6 text-white" />
+      <div className="absolute right-2 bottom-16 sm:right-4 sm:bottom-20 flex flex-col items-center gap-4 sm:gap-6">
+        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent">
+          <div className="bg-gray-800/40 p-2 sm:p-3 rounded-full">
+            <UserPlus className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
-          <span className="text-white text-xs">Follow</span>
-        </button>
+          <span className="text-xs mt-1">Follow</span>
+        </Button>
 
-        <button className="flex flex-col items-center gap-1">
-          <div className="bg-gray-800/40 p-3 rounded-full">
-            <Heart className="h-6 w-6 text-white" />
+        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent">
+          <div className="bg-gray-800/40 p-2 sm:p-3 rounded-full">
+            <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
-          <span className="text-white text-xs">15K</span>
-        </button>
+          <span className="text-xs mt-1">15K</span>
+        </Button>
 
-        <button className="flex flex-col items-center gap-1">
-          <div className="bg-gray-800/40 p-3 rounded-full">
-            <ThumbsDown className="h-6 w-6 text-white" />
+        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent">
+          <div className="bg-gray-800/40 p-2 sm:p-3 rounded-full">
+            <ThumbsDown className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
-          <span className="text-white text-xs">100</span>
-        </button>
+          <span className="text-xs mt-1">100</span>
+        </Button>
 
-        <button className="flex flex-col items-center gap-1">
-          <div className="bg-gray-800/40 p-3 rounded-full">
-            <MessageCircle className="h-6 w-6 text-white" />
+        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent">
+          <div className="bg-gray-800/40 p-2 sm:p-3 rounded-full">
+            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
-          <span className="text-white text-xs">456</span>
-        </button>
+          <span className="text-xs mt-1">456</span>
+        </Button>
 
-        <button className="flex flex-col items-center gap-1">
-          <div className="bg-gray-800/40 p-3 rounded-full">
-            <Share2 className="h-6 w-6 text-white" />
+        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent">
+          <div className="bg-gray-800/40 p-2 sm:p-3 rounded-full">
+            <Share2 className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
-          <span className="text-white text-xs">Share</span>
-        </button>
+          <span className="text-xs mt-1">Share</span>
+        </Button>
       </div>
 
       <div className="absolute bottom-4 left-4 right-4">
