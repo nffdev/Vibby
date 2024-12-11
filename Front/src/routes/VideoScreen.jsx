@@ -189,7 +189,7 @@ export default function VideoScreen() {
         />
       </div>
 
-      <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 flex flex-col items-center gap-4 sm:gap-6 md:gap-8"> {/* Update 1 */}
+      <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 flex flex-col items-center gap-4 sm:gap-6 md:gap-8"> 
         <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group">
           <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
             <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
@@ -262,7 +262,7 @@ export default function VideoScreen() {
         </Button>
       </div>
 
-      <div className="absolute bottom-20 sm:bottom-24 left-2 sm:left-4 right-2 sm:right-4"> {/* Update 2 */}
+      <div className="absolute bottom-20 sm:bottom-24 left-2 sm:left-4 right-2 sm:right-4"> 
         <div className="w-full bg-gray-200/30 rounded-full h-0.5 sm:h-1">
           <div className="bg-white w-1/3 h-0.5 sm:h-1 rounded-full"></div>
         </div>
