@@ -2,9 +2,10 @@ import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X, Search} from 'lucide-react'
 import { cn } from "@/lib/utils"
 
 function CommentsOverlay({ onClose }) {
@@ -169,10 +170,15 @@ export default function VideoScreen() {
       </div>
 
       <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
-        <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-white">
-          <AvatarImage src="/placeholder.svg" alt="User avatar" />
-          <AvatarFallback>UV</AvatarFallback>
-        </Avatar>
+      <Button 
+          variant="ghost" 
+          size="icon" 
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
+        >
+          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
+            <Search className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          </div>
+        </Button>
       </div>
 
       <div className="relative h-full w-full">
@@ -183,12 +189,12 @@ export default function VideoScreen() {
         />
       </div>
 
-      <div className="absolute right-1 sm:right-2 md:right-4 bottom-12 sm:bottom-16 md:bottom-20 flex flex-col items-center gap-2 sm:gap-4 md:gap-6">
-        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent">
-          <div className="bg-gray-800/40 p-1.5 sm:p-2 md:p-3 rounded-full">
-            <UserPlus className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+      <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 flex flex-col items-center gap-4 sm:gap-6 md:gap-8"> {/* Update 1 */}
+        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group">
+          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
+            <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
           </div>
-          <span className="text-[10px] sm:text-xs mt-1">Follow</span>
+          <span className="text-xs sm:text-sm md:text-base mt-2">Follow</span>
         </Button>
 
         <Button 
@@ -198,69 +204,70 @@ export default function VideoScreen() {
           className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
         >
           <div className={cn(
-            "bg-gray-800/40 p-1.5 sm:p-2 md:p-3 rounded-full transition-colors",
+            "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
             interaction === 'like' && "bg-blue-500"
           )}>
             <ThumbsUp 
               className={cn(
-                "h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 transition-all",
+                "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
                 interaction === 'like' && "fill-white"
               )} 
             />
           </div>
-          <span className="text-[10px] sm:text-xs mt-1">{counts.likes.toLocaleString()}</span>
+          <span className="text-xs sm:text-sm md:text-base mt-2">{counts.likes.toLocaleString()}</span>
         </Button>
 
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => handleInteraction('dislike')}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent"
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
         >
           <div className={cn(
-            "bg-gray-800/40 p-1.5 sm:p-2 md:p-3 rounded-full transition-colors",
+            "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
             interaction === 'dislike' && "bg-red-500"
           )}>
             <ThumbsDown 
               className={cn(
-                "h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 transition-all",
+                "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
                 interaction === 'dislike' && "fill-white"
               )} 
             />
           </div>
-          <span className="text-[10px] sm:text-xs mt-1">{counts.dislikes.toLocaleString()}</span>
+          <span className="text-xs sm:text-sm md:text-base mt-2">{counts.dislikes.toLocaleString()}</span>
         </Button>
 
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => setShowComments(true)}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent"
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
         >
-          <div className="bg-gray-800/40 p-1.5 sm:p-2 md:p-3 rounded-full">
-            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
+            <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
           </div>
-          <span className="text-[10px] sm:text-xs mt-1">456</span>
+          <span className="text-xs sm:text-sm md:text-base mt-2">456</span>
         </Button>
 
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => setShowShare(true)}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent"
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
         >
-          <div className="bg-gray-800/40 p-1.5 sm:p-2 md:p-3 rounded-full">
-            <Share2 className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
+            <Share2 className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
           </div>
-          <span className="text-[10px] sm:text-xs mt-1">Share</span>
+          <span className="text-xs sm:text-sm md:text-base mt-2">Share</span>
         </Button>
       </div>
 
-      <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4">
+      <div className="absolute bottom-20 sm:bottom-24 left-2 sm:left-4 right-2 sm:right-4"> {/* Update 2 */}
         <div className="w-full bg-gray-200/30 rounded-full h-0.5 sm:h-1">
           <div className="bg-white w-1/3 h-0.5 sm:h-1 rounded-full"></div>
         </div>
       </div>
+      <BottomNav />
     </div>
   )
 }
