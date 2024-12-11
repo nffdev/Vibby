@@ -7,7 +7,7 @@ export default function BottomNav() {
   const navigate = useNavigate();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-between items-center p-4 bg-black/50">
+    <div className="fixed bottom-0 left-0 right-0 z-20 flex justify-between items-center p-1 bg-black/30">
       <Button 
         variant="ghost" 
         className="text-white hover:bg-white/20 flex flex-col items-center"

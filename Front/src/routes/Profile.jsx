@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle } from 'lucide-react'
+import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react'
 
 const VideoGrid = ({ videos }) => (
   <div className="grid grid-cols-2 gap-4 p-4">
@@ -25,8 +26,47 @@ const VideoGrid = ({ videos }) => (
   </div>
 )
 
+const FollowOverlay = ({ title, users, onClose }) => (
+  <>
+    <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      exit={{ y: "100%" }}
+      transition={{ type: "spring", damping: 20, stiffness: 300 }}
+      className="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-900 rounded-t-xl z-50 flex flex-col max-h-[80vh]"
+    >
+      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 p-4 border-b flex items-center justify-between">
+        <h2 className="font-semibold text-lg">{title}</h2>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {users.map((user, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user.username}</p>
+            </div>
+            <Button variant="outline" size="sm">
+              {user.isFollowing ? 'Unfollow' : 'Follow'}
+            </Button>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  </>
+)
+
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("videos")
+  const [showFollowers, setShowFollowers] = useState(false)
+  const [showFollowing, setShowFollowing] = useState(false)
   
   const user = {
     username: "@vibby",
@@ -43,6 +83,13 @@ export default function Profile() {
     thumbnail: `/placeholder.svg?text=Video${i+1}`,
     title: `Video ${i + 1}`,
     views: `${Math.floor(Math.random() * 100)}K`
+  }))
+
+  const mockUsers = Array(20).fill().map((_, i) => ({
+    name: `User ${i + 1}`,
+    username: `@user${i + 1}`,
+    avatar: `/placeholder.svg?text=U${i+1}`,
+    isFollowing: Math.random() > 0.5
   }))
 
   return (
@@ -78,14 +125,14 @@ export default function Profile() {
         </div>
 
         <div className="flex justify-center space-x-8 py-6 border-y border-gray-200 mt-6">
-          <div className="text-center">
+          <button onClick={() => setShowFollowing(true)} className="text-center">
             <p className="font-semibold text-xl">{user.following.toLocaleString()}</p>
             <p className="text-gray-600 text-sm">Following</p>
-          </div>
-          <div className="text-center">
+          </button>
+          <button onClick={() => setShowFollowers(true)} className="text-center">
             <p className="font-semibold text-xl">{user.followers.toLocaleString()}</p>
             <p className="text-gray-600 text-sm">Followers</p>
-          </div>
+          </button>
           <div className="text-center">
             <p className="font-semibold text-xl">{user.likes.toLocaleString()}</p>
             <p className="text-gray-600 text-sm">Likes</p>
@@ -114,6 +161,23 @@ export default function Profile() {
         </Tabs>
       </div>
       <BottomNav />
+
+      <AnimatePresence>
+        {showFollowers && (
+          <FollowOverlay
+            title="Followers"
+            users={mockUsers}
+            onClose={() => setShowFollowers(false)}
+          />
+        )}
+        {showFollowing && (
+          <FollowOverlay
+            title="Following"
+            users={mockUsers}
+            onClose={() => setShowFollowing(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
