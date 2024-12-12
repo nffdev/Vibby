@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X, Search} from 'lucide-react'
+import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X, Search } from 'lucide-react'
 import { cn } from "@/lib/utils"
 
 function CommentsOverlay({ onClose }) {
@@ -85,15 +85,12 @@ function ShareOverlay({ onClose }) {
   )
 }
 
-export default function VideoScreen() {
-  const navigate = useNavigate()
+function VideoPlayer({ video, onInteraction }) {
   const [interaction, setInteraction] = useState(null)
-  const [counts, setCounts] = useState({ likes: 15000, dislikes: 100 })
+  const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
-  const [showComments, setShowComments] = useState(false)
-  const [showShare, setShowShare] = useState(false)
 
-  const handleInteraction = useCallback((type) => {
+  const manageInteraction = useCallback((type) => {
     setInteraction((prev) => {
       if (prev === type) {
         setShowThumb(false)
@@ -116,7 +113,9 @@ export default function VideoScreen() {
         }
       }
     })
-  }, [interaction])
+
+    onInteraction(type, video.id)
+  }, [interaction, video.id, onInteraction])
 
   useEffect(() => {
     let timer
@@ -127,7 +126,12 @@ export default function VideoScreen() {
   }, [showThumb])
 
   return (
-    <div className="relative h-screen w-full max-w-7xl mx-auto bg-gradient-to-b from-cyan-900 to-sky-400 overflow-hidden">
+    <div className="relative h-full w-full">
+      <img
+        src={video.src}
+        alt={video.description}
+        className="object-cover w-full h-full"
+      />
       <AnimatePresence>
         {showThumb && (
           <motion.div
@@ -144,7 +148,133 @@ export default function VideoScreen() {
             )}
           </motion.div>
         )}
+      </AnimatePresence>
+      <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
+        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group">
+          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
+            <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          </div>
+          <span className="text-xs sm:text-sm md:text-base mt-2">Follow</span>
+        </Button>
 
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => manageInteraction('like')}
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
+        >
+          <div className={cn(
+            "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
+            interaction === 'like' && "bg-blue-500"
+          )}>
+            <ThumbsUp 
+              className={cn(
+                "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
+                interaction === 'like' && "fill-white"
+              )} 
+            />
+          </div>
+          <span className="text-xs sm:text-sm md:text-base mt-2">{counts.likes.toLocaleString()}</span>
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => manageInteraction('dislike')}
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
+        >
+          <div className={cn(
+            "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
+            interaction === 'dislike' && "bg-red-500"
+          )}>
+            <ThumbsDown 
+              className={cn(
+                "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
+                interaction === 'dislike' && "fill-white"
+              )} 
+            />
+          </div>
+          <span className="text-xs sm:text-sm md:text-base mt-2">{counts.dislikes.toLocaleString()}</span>
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => onInteraction('comment', video.id)}
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
+        >
+          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
+            <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          </div>
+          <span className="text-xs sm:text-sm md:text-base mt-2">{video.comments}</span>
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => onInteraction('share', video.id)}
+          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
+        >
+          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
+            <Share2 className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          </div>
+          <span className="text-xs sm:text-sm md:text-base mt-2">Share</span>
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export default function VideoScreen() {
+  const navigate = useNavigate()
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+  const [showComments, setShowComments] = useState(false)
+  const [showShare, setShowShare] = useState(false)
+  const containerRef = useRef(null)
+
+  const videos = [
+    { id: 1, src: "/placeholder.svg?height=1920&width=1080", description: "Video 1", likes: 15000, dislikes: 100, comments: 456 },
+    { id: 2, src: "/placeholder.svg?height=1920&width=1080", description: "Video 2", likes: 20000, dislikes: 200, comments: 789 },
+    { id: 3, src: "/placeholder.svg?height=1920&width=1080", description: "Video 3", likes: 18000, dislikes: 150, comments: 567 },
+  ]
+
+  const manageInteraction = useCallback((type, videoId) => {
+    if (type === 'comment') {
+      setShowComments(true)
+    } else if (type === 'share') {
+      setShowShare(true)
+    }
+    console.log(`Interaction: ${type} on video ${videoId}`)
+  }, [])
+
+  const manageScroll = useCallback((event) => {
+    const container = containerRef.current
+    if (!container) return
+
+    const scrollPosition = container.scrollTop
+    const videoHeight = container.clientHeight
+    const newIndex = Math.round(scrollPosition / videoHeight)
+
+    if (newIndex !== currentVideoIndex) {
+      setCurrentVideoIndex(newIndex)
+    }
+  }, [currentVideoIndex])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (container) {
+      container.addEventListener('scroll', manageScroll)
+    }
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', manageScroll)
+      }
+    }
+  }, [manageScroll])
+
+  return (
+    <div className="relative h-screen w-full max-w-7xl mx-auto bg-gradient-to-b from-cyan-900 to-sky-400 overflow-hidden">
+      <AnimatePresence>
         {showComments && (
           <div className="absolute inset-0 bg-black/50 z-40">
             <CommentsOverlay onClose={() => setShowComments(false)} />
@@ -170,7 +300,7 @@ export default function VideoScreen() {
       </div>
 
       <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
-      <Button 
+        <Button 
           variant="ghost" 
           size="icon" 
           className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
@@ -181,90 +311,27 @@ export default function VideoScreen() {
         </Button>
       </div>
 
-      <div className="relative h-full w-full">
-        <img
-          src="/placeholder.svg?height=1920&width=1080"
-          alt=""
-          className="object-cover w-full h-full"
-        />
-      </div>
-
-      <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 flex flex-col items-center gap-4 sm:gap-6 md:gap-8"> 
-        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group">
-          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
-            <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">Follow</span>
-        </Button>
-
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleInteraction('like')}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
-        >
-          <div className={cn(
-            "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
-            interaction === 'like' && "bg-blue-500"
-          )}>
-            <ThumbsUp 
-              className={cn(
-                "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
-                interaction === 'like' && "fill-white"
-              )} 
+      <div 
+        ref={containerRef}
+        className="h-full overflow-y-scroll snap-y snap-mandatory"
+        style={{ scrollSnapType: 'y mandatory' }}
+      >
+        {videos.map((video, index) => (
+          <div key={video.id} className="h-full snap-start">
+            <VideoPlayer 
+              video={video} 
+              onInteraction={manageInteraction}
             />
           </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">{counts.likes.toLocaleString()}</span>
-        </Button>
-
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleInteraction('dislike')}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
-        >
-          <div className={cn(
-            "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
-            interaction === 'dislike' && "bg-red-500"
-          )}>
-            <ThumbsDown 
-              className={cn(
-                "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
-                interaction === 'dislike' && "fill-white"
-              )} 
-            />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">{counts.dislikes.toLocaleString()}</span>
-        </Button>
-
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setShowComments(true)}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
-        >
-          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
-            <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">456</span>
-        </Button>
-
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setShowShare(true)}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
-        >
-          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
-            <Share2 className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">Share</span>
-        </Button>
+        ))}
       </div>
 
       <div className="absolute bottom-20 sm:bottom-24 left-2 sm:left-4 right-2 sm:right-4"> 
         <div className="w-full bg-gray-200/30 rounded-full h-0.5 sm:h-1">
-          <div className="bg-white w-1/3 h-0.5 sm:h-1 rounded-full"></div>
+          <div 
+            className="bg-white h-0.5 sm:h-1 rounded-full transition-all duration-300"
+            // style={{ width: `${((currentVideoIndex + 1) / videos.length) * 100}%` }}
+          ></div>
         </div>
       </div>
       <BottomNav />
