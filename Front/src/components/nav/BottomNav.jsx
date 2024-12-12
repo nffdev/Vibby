@@ -16,7 +16,10 @@ export default function BottomNav() {
         <Home className="h-16 w-16" />
       </Button>
 
-      <Button className="rounded-full w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700">
+      <Button 
+        className="rounded-full w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700"
+        onClick={() => navigate('/upload')}
+      >
         <Plus className="h-6 w-6 text-white" />
       </Button>
 
