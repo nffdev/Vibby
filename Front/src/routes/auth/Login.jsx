@@ -23,7 +23,7 @@ export default function Register() {
             .then(json => {
                 if (json.token) {
                     localStorage.setItem('token', json.token);
-                    window.location.replace('/dash/dashboard');
+                    window.location.replace('/createprofile');
                 } else {
                     setError(json.message || 'An error occured.');
                 }

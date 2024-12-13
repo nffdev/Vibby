@@ -8,7 +8,7 @@ const app = express();
 
 app.disable('x-powered-by');
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json({ limit: '500mb' }));
+app.use(bodyParser.json({ limit: '5mb' }));
 
 app.use(cors({
     origin: ['http://localhost:5173', 'http://192.168.1.80:5173'],
@@ -23,12 +23,12 @@ mongoose.connect(process.env.MONGO_URL)
     })
     .catch(err => console.log(`Error to connect to mongodb: ${err}`));
 
-const base_route = '/api/v1';
+const base_route = '/v1';
 
 // exemple
-const usersRoutes = require('./routes/users');
+const profileRoutes = require('./routes/profiles');
 const authRoutes = require('./routes/auth');
-app.use(base_route + '/users', usersRoutes);
+app.use(base_route + '/profiles', profileRoutes);
 app.use(base_route + '/auth', authRoutes);
 
 process
