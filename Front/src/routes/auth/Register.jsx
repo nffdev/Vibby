@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { User, Lock, ArrowRight } from 'lucide-react';
 
 export default function Register() {
     const [datas, setDatas] = useState({ email: '', password: '', confirmPassword: '' });
@@ -33,30 +35,105 @@ export default function Register() {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center w-full h-screen py-8 bg-gray-800 text-white">
-            <div className="flex flex-col items-center justify-center w-full max-w-96">
-                <h1 className="text-center text-4xl font-extrabold">Créer un compte</h1>
-                {error ? <p className="text-red-500 mt-10">{error}</p> : null}
-                <label htmlFor="email" className="relative w-full mt-12">
-                    <box-icon class="fill-white opacity-30 w-6 h-6 absolute top-1/2 transform -translate-y-1/2 left-3" type='solid' name='user'></box-icon>
-                    <Input className="text-black" onChange={(e) => setDatas(prev => ({ ...prev, email: e.target.value }))} type="email" name="email" id="email" placeholder="Email"></Input>
-                </label>
-                <label htmlFor="password" className="relative w-full mt-4">
-                    <box-icon class="fill-white opacity-30 w-6 h-6 absolute top-1/2 transform -translate-y-1/2 left-3" type='solid' name='lock-alt'></box-icon>
-                    <Input className="text-black" onChange={(e) => setDatas(prev => ({ ...prev, password: e.target.value }))} type="password" name="password" id="password" placeholder="Mot de passe"></Input>
-                </label>
-                <label htmlFor="confirmPassword" className="relative w-full mt-4">
-                    <box-icon class="fill-white opacity-30 w-6 h-6 absolute top-1/2 transform -translate-y-1/2 left-3" type='solid' name='lock-alt'></box-icon>
-                    <Input className="text-black" onChange={(e) => setDatas(prev => ({ ...prev, confirmPassword: e.target.value }))} type="password" name="confirmPassword" id="confirmPassword" placeholder="Confirmez le mot de passe"></Input>
-                </label>
-                <div className="flex items-center justify-between w-full px-8 mt-10">
-                    <h2 className="text-2xl font-extrabold mt-2">S'inscrire</h2>
-                    <Button size='icon' onClick={() => register()}><box-icon class="h-8 w-8 fill-white" name='right-arrow-alt'></box-icon></Button>
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center w-full min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-purple-400 to-pink-500 text-white"
+        >
+            <motion.div 
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="w-full max-w-md space-y-8"
+            >
+                <div>
+                    <motion.h1 
+                        className="mt-6 text-center text-3xl font-extrabold"
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                    >
+                        Create Your Account
+                    </motion.h1>
                 </div>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-8 w-full">
-                <Link to={'/auth/login'} className="text-muted-foreground font-light cursor-pointer">Je suis déjà inscrit·e</Link>
-            </div>
-        </div>
+                {error && (
+                    <motion.p 
+                        className="text-red-500 text-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                    >
+                        {error}
+                    </motion.p>
+                )}
+                <motion.form 
+                    className="mt-8 space-y-6"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                >
+                    <div className="rounded-md shadow-sm -space-y-px">
+                        <div className="relative">
+                            <User className="absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-400" size={20} />
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm pl-10"
+                                placeholder="Email address"
+                                onChange={(e) => setDatas(prev => ({ ...prev, email: e.target.value }))}
+                            />
+                        </div>
+                        <div className="relative">
+                            <Lock className="absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-400" size={20} />
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm pl-10"
+                                placeholder="Password"
+                                onChange={(e) => setDatas(prev => ({ ...prev, password: e.target.value }))}
+                            />
+                        </div>
+                        <div className="relative">
+                            <Lock className="absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-400" size={20} />
+                            <Input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm pl-10"
+                                placeholder="Confirm Password"
+                                onChange={(e) => setDatas(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <Button
+                            onClick={register}
+                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-purple-500 to-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                        >
+                            <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                                <ArrowRight className="h-5 w-5 text-white group-hover:text-gray-400" aria-hidden="true" />
+                            </span>
+                            Sign up
+                        </Button>
+                    </div>
+                </motion.form>
+            </motion.div>
+            <motion.div 
+                className="mt-8 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+            >
+                <Link to="/auth/login" className="font-medium text-white hover:text-gray-500 transition-colors">
+                    Already have an account? Sign in
+                </Link>
+            </motion.div>
+        </motion.div>
     );
 }
