@@ -23,13 +23,41 @@ export default function App() {
     interests: [],
   });
 
+  const postProfileData = async (data) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Access token not found.');
+
+      const response  = await fetch('http://localhost:8080/v1/profiles/onboarding', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create profile');
+      }
+
+      const result = await response.json();
+      console.log('Profile created:', result);
+
+      window.location.replace('/dash/dashboard');
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      alert('Failed to complete onboarding. Please try again.');
+    }
+  }
+
   const manageNext = (data) => {
     setProfile((prev) => ({ ...prev, ...data }));
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
       console.log('Profile created:', { ...profile, ...data });
-
+      postProfileData({...profile, ...data});
     }
   };
 

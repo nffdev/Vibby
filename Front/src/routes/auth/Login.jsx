@@ -4,11 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function Register() {
-    const [datas, setDatas] = useState({ username: '', email: '', password: '' });
+    const [datas, setDatas] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
 
     async function login() {
-        if (!datas.username) return setError('Username is required.');
         if (!datas.email) return setError('Email is required.');
         if (!datas.password) return setError('Password is required.');
         
@@ -23,12 +22,12 @@ export default function Register() {
             .then(json => {
                 if (json.token) {
                     localStorage.setItem('token', json.token);
-                    window.location.replace('/createprofile');
+                    window.location.replace('/profile/onboarding');
                 } else {
-                    setError(json.message || 'An error occured.');
+                    setError(json.message || 'An error occurred.');
                 }
             })
-            .catch(() => setError('An error occured.'));
+            .catch(() => setError('An error occurred.'));
     }
 
     return (
@@ -36,11 +35,7 @@ export default function Register() {
             <div className="flex flex-col items-center justify-center w-full max-w-96">
                 <h1 className="text-center text-4xl font-extrabold">Login</h1>
                 {error ? <p className="text-red-500 mt-10">{error}</p> : null}
-                <label htmlFor="username" className={`relative w-full ${error ? 'mt-2' : 'mt-12'}`}>
-                    <box-icon class="fill-white opacity-30 w-6 h-6 absolute top-1/2 transform -translate-y-1/2 left-3" type='solid' name='user'></box-icon>
-                    <Input className="text-black" onChange={(e) => setDatas(prev => ({ ...prev, username: e.target.value }))} type="username" name="username" id="username" placeholder="Username"></Input>
-                </label>
-                <label htmlFor="email" className="relative w-full mt-4">
+                <label htmlFor="email" className="relative w-full mt-12">
                     <box-icon class="fill-white opacity-30 w-6 h-6 absolute top-1/2 transform -translate-y-1/2 left-3" type='solid' name='user'></box-icon>
                     <Input className="text-black" onChange={(e) => setDatas(prev => ({ ...prev, email: e.target.value }))} type="email" name="email" id="email" placeholder="Email"></Input>
                 </label>
@@ -57,5 +52,5 @@ export default function Register() {
                 <Link to="/auth/register" className="text-muted-foreground font-light cursor-pointer">Still no account ? Create one now !</Link>
             </div>
         </div>
-    )
+    );
 }

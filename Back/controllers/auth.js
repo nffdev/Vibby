@@ -3,19 +3,19 @@ const crypto = require('node:crypto');
 const User = require('../models/User');
 
 const register = async (req, res) => {
-    const { username, email, password, confirmPassword } = req.body;
+    const { email, password, confirmPassword } = req.body;
 
-    if (!username) return res.status(400).json({ message: 'Username is required.' });
+    // if (!username) return res.status(400).json({ message: 'Username is required.' });
     if (!email) return res.status(400).json({ message: 'Email is required.' });
     if (!password) return res.status(400).json({ message: 'Password is required.' });
     if (!confirmPassword) return res.status(400).json({ message: 'You must confirm your password.' });
     if (password !== confirmPassword) return res.status(400).json({ message: 'Passwords are not matching.' });
 
-    const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_-]{2,15}$/;
-    if (!usernameRegex.test(username)) return res.status(400).json({ message: 'The provided username is invalid.' });
+    // const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_-]{2,15}$/;
+    // if (!usernameRegex.test(username)) return res.status(400).json({ message: 'The provided username is invalid.' });
 
-    const existingUsername = await User.findOne({ username });
-    if (existingUsername) return res.status(400).json({ message: 'Username already in use.' });
+    // const existingUsername = await User.findOne({ username });
+    // if (existingUsername) return res.status(400).json({ message: 'Username already in use.' });
 
     const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
     if (!emailRegex.test(email)) return res.status(400).json({ message: 'The provided email is invalid.' });
@@ -29,7 +29,7 @@ const register = async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, 10);
     const token = crypto.randomBytes(24).toString('hex');
 
-    const user = new User({ id: crypto.randomUUID(), username, email, password: hashedPassword, token });
+    const user = new User({ id: crypto.randomUUID(), email, password: hashedPassword, token });
     await user.save();
 
     return res.json({ token });
