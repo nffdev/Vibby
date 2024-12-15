@@ -1,3 +1,4 @@
+import useSWR from 'swr';
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
@@ -7,12 +8,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Upload } from 'lucide-react'
+import { BASE_API, API_VERSION } from "../config.json"
+import MuxUploader from "@mux/mux-uploader-react";
 
 export default function UploadPage() {
   const navigate = useNavigate()
   const [file, setFile] = useState(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+
+  const fetcher = (url) => fetch(`${BASE_API}/v${API_VERSION}${url}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } }).then(response => response.json());
+  const { data, isLoading } = useSWR('/uploads', fetcher, {
+    revalidateIfStale: false,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false
+  });
 
   const onDrop = useCallback(acceptedFiles => {
     setFile(acceptedFiles[0])
@@ -47,7 +57,7 @@ export default function UploadPage() {
           </div>
 
           <form onSubmit={manageSubmit} className="space-y-6">
-            <div
+            {/* <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                 isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
@@ -64,7 +74,9 @@ export default function UploadPage() {
                   </p>
                 </div>
               )}
-            </div>
+            </div> */}
+
+            <MuxUploader endpoint={data?.url || ''}/>
 
             <Input
               type="text"

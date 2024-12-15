@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { UserContext } from "@/lib/contexts/userContext";
 import { BASE_API, API_VERSION } from "../../config.json";
@@ -14,16 +14,19 @@ export function AuthWrapper({ children }) {
 	const [onboarding, setOnboarding] = useState(false);
 	const { user, updateUser } = useAuth();
 	const navigate = useNavigate();
+	const location = useLocation();
 	
 	const auth = localStorage.getItem('token');
-	if (window.location.pathname.startsWith('/auth/login') && auth) return window.location.replace('/dash/dashboard');
+	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/dash/dashboard');
 
 	useEffect(() => {
-		if (!['/dash', '/profile'].some(path => window.location.pathname.startsWith(path)) || !auth || (user && user.id)) return;
+		if (!['/dash', '/profile', '/upload'].some(path => window.location.pathname.startsWith(path)) || !auth || (user && user.id)) return;
 		setIsLoading(true);
 
 		async function getUser() {
 			const data = await fetch(`${BASE_API}/v${API_VERSION}/profiles/me`, { method: 'GET', headers: { 'Authorization': `${auth}` } }).then(response => response.json()).catch(() => null);
+			
+			if (data?.message === 'Unauthorized.') localStorage.removeItem('token');
 
 			if (data?.error === 'COMPLETE_ONBOARDING') {
 				setOnboarding(true);
@@ -41,10 +44,10 @@ export function AuthWrapper({ children }) {
 		}
 
 		getUser();
-	}, []);
+	}, [location]);
 
 	if (onboarding) return <>{children}</>;
-	if (!['/dash', '/profile'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
+	if (!['/dash', '/profile', '/upload'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
 	if (user && user.id) return <>{children}</>;
 	if (!auth) return <Login />;
 

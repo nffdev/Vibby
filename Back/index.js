@@ -27,8 +27,10 @@ const base_route = '/v1';
 
 // exemple
 const profileRoutes = require('./routes/profiles');
+const uploadsRoutes = require('./routes/uploads');
 const authRoutes = require('./routes/auth');
 app.use(base_route + '/profiles', profileRoutes);
+app.use(base_route + '/uploads', uploadsRoutes);
 app.use(base_route + '/auth', authRoutes);
 
 process

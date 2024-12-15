@@ -2,23 +2,26 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react'
 import Step1Username from '@/components/steps/Step1Username';
-import Step2Avatar from '@/components/steps/Step2Avatar';
-import Step3Bio from '@/components/steps/Step3Bio';
-import Step4Interests from '@/components/steps/Step4Interests';
+import Step2Name from '@/components/steps/Step2Name';
+import Step3Avatar from '@/components/steps/Step3Avatar';
+import Step4Bio from '@/components/steps/Step4Bio';
+import Step5Interests from '@/components/steps/Step5Interests';
 import ProgressBar from '@/components/ui/progressbar';
 import { BASE_API, API_VERSION } from "../../config.json";
 
 const steps = [
   { component: Step1Username, title: 'Choose Username' },
-  { component: Step2Avatar, title: 'Upload Avatar' },
-  { component: Step3Bio, title: 'Write Bio' },
-  { component: Step4Interests, title: 'Select Interests' },
+  { component: Step2Name, title: 'Enter FullName' },
+  { component: Step3Avatar, title: 'Upload Avatar' },
+  { component: Step4Bio, title: 'Write Bio' },
+  { component: Step5Interests, title: 'Select Interests' },
 ];
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [profile, setProfile] = useState({
     username: '',
+    name: '',
     avatar: null,
     bio: '',
     interests: [],

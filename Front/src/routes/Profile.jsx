@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import BottomNav from "@/components/nav/BottomNav"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react'
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import BottomNav from "@/components/nav/BottomNav";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react';
+import { useAuth } from "@/lib/hooks/useAuth";
 
 const VideoGrid = ({ videos }) => (
   <div className="grid grid-cols-2 gap-4 p-4">
@@ -24,7 +25,7 @@ const VideoGrid = ({ videos }) => (
       </div>
     ))}
   </div>
-)
+);
 
 const FollowOverlay = ({ title, users, onClose }) => (
   <>
@@ -61,36 +62,31 @@ const FollowOverlay = ({ title, users, onClose }) => (
       </div>
     </motion.div>
   </>
-)
+);
 
 export default function Profile() {
-  const [activeTab, setActiveTab] = useState("videos")
-  const [showFollowers, setShowFollowers] = useState(false)
-  const [showFollowing, setShowFollowing] = useState(false)
-  
-  const user = {
-    username: "@vibby",
-    name: "Vibby Profile",
-    avatar: "/placeholder.svg",
-    bio: "Just a chill guy making videos",
-    followers: 10500,
-    following: 500,
-    likes: 55000
-  }
+  const { user } = useAuth(); 
+  const [activeTab, setActiveTab] = useState("videos");
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
 
   const videos = Array(6).fill().map((_, i) => ({
     id: i,
-    thumbnail: `/placeholder.svg?text=Video${i+1}`,
+    thumbnail: `/placeholder.svg?text=Video${i + 1}`,
     title: `Video ${i + 1}`,
     views: `${Math.floor(Math.random() * 100)}K`
-  }))
+  }));
 
   const mockUsers = Array(20).fill().map((_, i) => ({
     name: `User ${i + 1}`,
     username: `@user${i + 1}`,
-    avatar: `/placeholder.svg?text=U${i+1}`,
+    avatar: `/placeholder.svg?text=U${i + 1}`,
     isFollowing: Math.random() > 0.5
-  }))
+  }));
+
+  if (!user) {
+    return <div>Loading...</div>; 
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100">
@@ -98,16 +94,16 @@ export default function Profile() {
         <div className="relative h-40 bg-gradient-to-r from-purple-400 to-pink-500">
           <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
             <Avatar className="w-32 h-32 border-4 border-white">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name || "User"} />
+              <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
             </Avatar>
           </div>
         </div>
         
         <div className="mt-20 text-center">
-          <h1 className="text-2xl font-bold">{user.name}</h1>
+          <h1 className="text-2xl font-bold">{user.name || "Anonymous User"}</h1>
           <p className="text-gray-600 mt-1">{user.username}</p>
-          <p className="mt-2 px-4">{user.bio}</p>
+          <p className="mt-2 px-4">{user.bio || "No bio available"}</p>
         </div>
 
         <div className="flex justify-center space-x-4 mt-4">
@@ -126,15 +122,15 @@ export default function Profile() {
 
         <div className="flex justify-center space-x-8 py-6 border-y border-gray-200 mt-6">
           <button onClick={() => setShowFollowing(true)} className="text-center">
-            <p className="font-semibold text-xl">{user.following.toLocaleString()}</p>
+            <p className="font-semibold text-xl">{user.following?.toLocaleString() || 0}</p>
             <p className="text-gray-600 text-sm">Following</p>
           </button>
           <button onClick={() => setShowFollowers(true)} className="text-center">
-            <p className="font-semibold text-xl">{user.followers.toLocaleString()}</p>
+            <p className="font-semibold text-xl">{user.followers?.toLocaleString() || 0}</p>
             <p className="text-gray-600 text-sm">Followers</p>
           </button>
           <div className="text-center">
-            <p className="font-semibold text-xl">{user.likes.toLocaleString()}</p>
+            <p className="font-semibold text-xl">{user.likes?.toLocaleString() || 0}</p>
             <p className="text-gray-600 text-sm">Likes</p>
           </div>
         </div>
@@ -179,5 +175,5 @@ export default function Profile() {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
