@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { User, Lock, ArrowRight } from 'lucide-react';
+import { BASE_API, API_VERSION } from "../../config.json";
 
 export default function Login() {
     const [datas, setDatas] = useState({ email: '', password: '' });
@@ -13,7 +14,7 @@ export default function Login() {
         if (!datas.email) return setError('Email is required.');
         if (!datas.password) return setError('Password is required.');
         
-        fetch('http://localhost:8080/api/v1/auth/login', {
+        fetch(`${BASE_API}/v${API_VERSION}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -24,7 +25,7 @@ export default function Login() {
             .then(json => {
                 if (json.token) {
                     localStorage.setItem('token', json.token);
-                    window.location.replace('/profile/onboarding');
+                    window.location.replace('/dash/dashboard');
                 } else {
                     setError(json.message || 'An error occurred.');
                 }
@@ -66,6 +67,7 @@ export default function Login() {
                 )}
                 <motion.form 
                     className="mt-8 space-y-6"
+                    onSubmit={(e) => e.preventDefault()}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.7 }}

@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { UserContext } from "@/lib/contexts/userContext";
 import { BASE_API, API_VERSION } from "../../config.json";
@@ -10,17 +11,28 @@ export function useAuth() {
 
 export function AuthWrapper({ children }) {
 	const [isLoading, setIsLoading] = useState(false);
+	const [onboarding, setOnboarding] = useState(false);
 	const { user, updateUser } = useAuth();
+	const navigate = useNavigate();
 	
 	const auth = localStorage.getItem('token');
 	if (window.location.pathname.startsWith('/auth/login') && auth) return window.location.replace('/dash/dashboard');
 
 	useEffect(() => {
-		if (!window.location.pathname.startsWith('/dash/dashboard') || !auth || (user && user.id)) return;
+		if (!['/dash', '/profile'].some(path => window.location.pathname.startsWith(path)) || !auth || (user && user.id)) return;
 		setIsLoading(true);
 
 		async function getUser() {
-			const data = await fetch(`${BASE_API}/v${API_VERSION}/users/@me`, { method: 'GET', headers: { 'Authorization': `${auth}` } }).then(response => response.json()).catch(() => null);
+			const data = await fetch(`${BASE_API}/v${API_VERSION}/profiles/me`, { method: 'GET', headers: { 'Authorization': `${auth}` } }).then(response => response.json()).catch(() => null);
+
+			if (data?.error === 'COMPLETE_ONBOARDING') {
+				setOnboarding(true);
+				if (!window.location.pathname.startsWith('/profile/onboarding')) navigate('/profile/onboarding');
+			}
+
+			if (window.location.pathname.startsWith('/profile/onboarding') && data?.id) {
+				navigate('/dash/dashboard');
+			}
 
 			if (data?.id) {
 				updateUser(data);
@@ -31,7 +43,8 @@ export function AuthWrapper({ children }) {
 		getUser();
 	}, []);
 
-	if (!window.location.pathname.startsWith('/dash/dashboard')) return <>{children}</>;
+	if (onboarding) return <>{children}</>;
+	if (!['/dash', '/profile'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
 	if (user && user.id) return <>{children}</>;
 	if (!auth) return <Login />;
 
@@ -40,9 +53,7 @@ export function AuthWrapper({ children }) {
 
 function Layout({ children }) {
 	return <>
-		{/* <Header /> */}
         <div className="flex">
-			{/* <Sidebar /> */}
 			<div className="flex items-center justify-between w-full h-full">
 				{children}
 			</div>

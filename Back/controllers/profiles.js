@@ -23,7 +23,6 @@ const completeOnboarding = async (req, res) => {
     if (!username) return res.status(400).json({ message: 'Username is required.' });
 
     if (typeof username !== 'string') return res.status(400).json({ message: 'Username must be a string.' });
-    if (typeof avatar !== 'string') return res.status(400).json({ message: 'Avatar must be a string.' });
     if (typeof bio !== 'string') return res.status(400).json({ message: 'Bio must be a string.' });
 
     if (!Array.isArray(interests)) return res.status(400).json({ message: 'Interests must be an array.' });

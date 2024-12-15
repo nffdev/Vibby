@@ -6,6 +6,7 @@ import Step2Avatar from '@/components/steps/Step2Avatar';
 import Step3Bio from '@/components/steps/Step3Bio';
 import Step4Interests from '@/components/steps/Step4Interests';
 import ProgressBar from '@/components/ui/progressbar';
+import { BASE_API, API_VERSION } from "../../config.json";
 
 const steps = [
   { component: Step1Username, title: 'Choose Username' },
@@ -28,7 +29,7 @@ export default function App() {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Access token not found.');
 
-      const response  = await fetch('http://localhost:8080/v1/profiles/onboarding', {
+      const response  = await fetch(`${BASE_API}/v${API_VERSION}/profiles/onboarding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,4 +102,3 @@ export default function App() {
     </div>
   );
 }
-
