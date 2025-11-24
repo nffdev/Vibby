@@ -16,6 +16,9 @@ export default function UploadPage() {
   const [file, setFile] = useState(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [uploadCompleted, setUploadCompleted] = useState(false)
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const fetcher = (url) => fetch(`${BASE_API}/v${API_VERSION}${url}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } }).then(response => response.json());
   const { data, isLoading } = useSWR('/uploads', fetcher, {
@@ -34,9 +37,36 @@ export default function UploadPage() {
     multiple: false
   })
 
-  const manageSubmit = (e) => {
+  const manageSubmit = async (e) => {
     e.preventDefault()
-    console.log('Uploading:', { file, title, description })
+    setError('')
+
+    if (!title.trim()) return setError('Title is required.')
+    if (!description.trim()) return setError('Description is required.')
+    if (!data?.id) return setError('Upload URL unavailable at the moment. Please try again later.')
+    if (!uploadCompleted) return setError('Upload the video first.')
+
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`${BASE_API}/v${API_VERSION}/videos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem('token')
+        },
+        body: JSON.stringify({ upload_id: data.id, title: title.trim(), description: description.trim() })
+      })
+      const json = await response.json()
+      if (!response.ok) {
+        setError(json.message || 'An error occurred.')
+      } else {
+        navigate(-1)
+      }
+    } catch (err) {
+      setError('Impossible to upload the video at the moment.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -76,7 +106,11 @@ export default function UploadPage() {
               )}
             </div> */}
 
-            <MuxUploader endpoint={data?.url || ''}/>
+            <MuxUploader 
+              endpoint={data?.url || ''}
+              onSuccess={() => setUploadCompleted(true)}
+              onUploadError={() => setError('Failed to upload the video.')}
+            />
 
             <Input
               type="text"
@@ -94,7 +128,11 @@ export default function UploadPage() {
               className="w-full"
             />
 
-            <Button type="submit" className="w-full">
+            {error && (
+              <p className="text-red-600 text-sm">{error}</p>
+            )}
+
+            <Button type="submit" className="w-full" disabled={isSubmitting || isLoading}>
               Upload Video
             </Button>
           </form>
