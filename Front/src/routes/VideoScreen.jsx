@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X, Search } from 'lucide-react'
 import { cn } from "@/lib/utils"
+import MuxPlayer from '@mux/mux-player-react'
+import { BASE_API, API_VERSION } from "../config.json"
 
 function CommentsOverlay({ onClose }) {
   return (
@@ -127,11 +129,32 @@ function VideoPlayer({ video, onInteraction }) {
 
   return (
     <div className="relative h-full w-full">
-      <img
-        src={video.src}
-        alt={video.description}
-        className="object-cover w-full h-full"
-      />
+      {video.playback_id ? (
+        <MuxPlayer
+          playbackId={video.playback_id}
+          streamType="on-demand"
+          className="object-cover w-full h-full"
+          autoPlay
+          muted
+        />
+      ) : (
+        <img
+          src={"/placeholder.svg?height=1920&width=1080"}
+          alt={video.description}
+          className="object-cover w-full h-full"
+        />
+      )}
+      <div className="absolute left-2 sm:left-4 bottom-28 sm:bottom-32 text-white max-w-[70%]">
+        {video.title && (
+          <div className="text-lg sm:text-xl font-semibold drop-shadow-md">{video.title}</div>
+        )}
+        {video.description && (
+          <div className="text-sm sm:text-base opacity-90 drop-shadow-md">{video.description}</div>
+        )}
+        {video.userId && (
+          <div className="text-xs sm:text-sm opacity-80 drop-shadow-md">by {video.userId}</div>
+        )}
+      </div>
       <AnimatePresence>
         {showThumb && (
           <motion.div
@@ -231,12 +254,57 @@ export default function VideoScreen() {
   const [showComments, setShowComments] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const containerRef = useRef(null)
+  const [videos, setVideos] = useState([])
+  const [error, setError] = useState('')
 
-  const videos = [
-    { id: 1, src: "/placeholder.svg?height=1920&width=1080", description: "Video 1", likes: 15000, dislikes: 100, comments: 456 },
-    { id: 2, src: "/placeholder.svg?height=1920&width=1080", description: "Video 2", likes: 20000, dislikes: 200, comments: 789 },
-    { id: 3, src: "/placeholder.svg?height=1920&width=1080", description: "Video 3", likes: 18000, dislikes: 150, comments: 567 },
-  ]
+  useEffect(() => {
+    const load = async () => {
+      setError('')
+      try {
+        const response = await fetch(`${BASE_API}/v${API_VERSION}/videos`)
+        const json = await response.json()
+        if (!response.ok) {
+          setError(json.message || 'Impossible to fetch videos.')
+        } else {
+          const mapped = json.map(v => ({
+            id: v.id,
+            playback_id: v.playback_id,
+            title: v.title,
+            description: v.description,
+            userId: v.userId,
+            likes: 0,
+            dislikes: 0,
+            comments: 0
+          }))
+          setVideos(mapped)
+
+          const toResolve = mapped.filter(v => !v.playback_id).map(v => v.id)
+          if (toResolve.length) {
+            const resolves = await Promise.all(toResolve.map(async (vid) => {
+              try {
+                const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${vid}/resolve`)
+                const j = await r.json()
+                if (r.ok) return j
+                return null
+              } catch { return null }
+            }))
+            const updates = resolves.filter(Boolean)
+            if (updates.length) {
+              setVideos(prev => prev.map(v => {
+                const u = updates.find(x => x.id === v.id)
+                return u ? { ...v, playback_id: u.playback_id } : v
+              }))
+            }
+          }
+        }
+      } catch (err) {
+        setError('Network error to load videos.')
+      }
+    }
+    load()
+  }, [])
+
+  const hasVideos = videos && videos.length > 0
 
   const manageInteraction = useCallback((type, videoId) => {
     if (type === 'comment') {
@@ -276,13 +344,13 @@ export default function VideoScreen() {
     <div className="relative h-screen w-full max-w-7xl mx-auto bg-gradient-to-b from-cyan-900 to-sky-400 overflow-hidden">
       <AnimatePresence>
         {showComments && (
-          <div className="absolute inset-0 bg-black/50 z-40">
+          <div key="comments" className="absolute inset-0 bg-black/50 z-40">
             <CommentsOverlay onClose={() => setShowComments(false)} />
           </div>
         )}
 
         {showShare && (
-          <div className="absolute inset-0 bg-black/50 z-40">
+          <div key="share" className="absolute inset-0 bg-black/50 z-40">
             <ShareOverlay onClose={() => setShowShare(false)} />
           </div>
         )}
@@ -316,14 +384,20 @@ export default function VideoScreen() {
         className="h-full overflow-y-scroll snap-y snap-mandatory"
         style={{ scrollSnapType: 'y mandatory' }}
       >
-        {videos.map((video, index) => (
-          <div key={video.id} className="h-full snap-start">
+        {hasVideos ? videos.map((video, index) => (
+          <div key={video.id || index} className="h-full snap-start">
             <VideoPlayer 
               video={video} 
               onInteraction={manageInteraction}
             />
           </div>
-        ))}
+        )) : (
+          <div className="h-full grid place-items-center">
+            <div className="text-white text-center">
+              {error ? error : 'No video at the moment.'}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="absolute bottom-20 sm:bottom-24 left-2 sm:left-4 right-2 sm:right-4"> 
