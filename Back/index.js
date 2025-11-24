@@ -25,12 +25,15 @@ mongoose.connect(process.env.MONGO_URL)
 
 const base_route = '/v1';
 
-// exemple
 const profileRoutes = require('./routes/profiles');
 const uploadsRoutes = require('./routes/uploads');
+const videosRoutes = require('./routes/videos');
+const muxRoutes = require('./routes/mux');
 const authRoutes = require('./routes/auth');
 app.use(base_route + '/profiles', profileRoutes);
 app.use(base_route + '/uploads', uploadsRoutes);
+app.use(base_route + '/videos', videosRoutes);
+app.use(base_route + '/mux', muxRoutes);
 app.use(base_route + '/auth', authRoutes);
 
 process
