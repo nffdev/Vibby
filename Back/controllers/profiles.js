@@ -59,8 +59,42 @@ const editMe = async (req, res) => {
     return res.status(400).json({ error: 'NOT_IMPLEMENTED', message: 'Not implemented.' });
 }
 
+const getByUsername = async (req, res) => {
+    try {
+        const username = String(req.params.username || '').toLowerCase().trim();
+        if (!username) return res.status(400).json({ message: 'Username is required.' });
+
+        const profile = await Profile.findOne({ username });
+        if (!profile) return res.status(404).json({ message: 'Profile not found.' });
+
+        const final = profile.toJSON();
+        delete final._id; delete final.__v;
+        return res.status(200).json(final);
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
+}
+
+const getById = async (req, res) => {
+    try {
+        const id = String(req.params.id || '').trim();
+        if (!id) return res.status(400).json({ message: 'User id is required.' });
+
+        const profile = await Profile.findOne({ id });
+        if (!profile) return res.status(404).json({ message: 'Profile not found.' });
+
+        const final = profile.toJSON();
+        delete final._id; delete final.__v;
+        return res.status(200).json(final);
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
+}
+
 module.exports = {
     getMe,
     editMe,
-    completeOnboarding
+    completeOnboarding,
+    getByUsername,
+    getById
 };

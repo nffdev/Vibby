@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react';
 import { useAuth } from "@/lib/hooks/useAuth";
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BASE_API, API_VERSION } from "../config.json";
 
 const VideoGrid = ({ videos, onSelect }) => (
@@ -69,22 +69,45 @@ const FollowOverlay = ({ title, users, onClose }) => (
 export default function Profile() {
   const { user } = useAuth(); 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("videos");
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
   const [videos, setVideos] = useState([]);
   const [loadingVideos, setLoadingVideos] = useState(true);
   const [error, setError] = useState('');
+  const [profileUser, setProfileUser] = useState(null);
 
   useEffect(() => {
-    const load = async () => {
+    const loadUser = async () => {
       if (!user) return;
+      const id = searchParams.get('id');
+      const u = searchParams.get('u');
+      if (id) {
+        const r = await fetch(`${BASE_API}/v${API_VERSION}/profiles/id/${id}`);
+        const j = await r.json();
+        if (r.ok) setProfileUser(j); else setProfileUser(user);
+      } else if (u) {
+        const r = await fetch(`${BASE_API}/v${API_VERSION}/profiles/${u}`);
+        const j = await r.json();
+        if (r.ok) setProfileUser(j); else setProfileUser(user);
+      } else {
+        setProfileUser(user);
+      }
+    };
+    loadUser();
+  }, [user, searchParams]);
+
+  useEffect(() => {
+    const loadVideos = async () => {
+      if (!profileUser) return;
       setLoadingVideos(true);
       setError('');
       try {
-        const response = await fetch(`${BASE_API}/v${API_VERSION}/videos/me`, {
-          headers: { 'Authorization': localStorage.getItem('token') }
-        });
+        const isOwner = user?.id === profileUser?.id;
+        const url = isOwner ? `${BASE_API}/v${API_VERSION}/videos/me` : `${BASE_API}/v${API_VERSION}/videos/user/${profileUser.id}`;
+        const headers = isOwner ? { 'Authorization': localStorage.getItem('token') } : undefined;
+        const response = await fetch(url, { headers });
         const json = await response.json();
         if (!response.ok) {
           setError(json.message || 'Impossible to load videos.');
@@ -126,8 +149,8 @@ export default function Profile() {
         setLoadingVideos(false);
       }
     };
-    load();
-  }, [user]);
+    loadVideos();
+  }, [profileUser, user]);
 
   const mockUsers = Array(20).fill().map((_, i) => ({
     name: `User ${i + 1}`,
@@ -136,7 +159,7 @@ export default function Profile() {
     isFollowing: Math.random() > 0.5
   }));
 
-  if (!user) {
+  if (!user || !profileUser) {
     return <div>Loading...</div>; 
   }
 
@@ -145,21 +168,21 @@ export default function Profile() {
       <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
         <div className="relative h-40 bg-gradient-to-r from-purple-400 to-pink-500">
           <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
-            <Avatar className="w-32 h-32 border-4 border-white">
-              <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name || "User"} />
-              <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
-            </Avatar>
+              <Avatar className="w-32 h-32 border-4 border-white">
+                <AvatarImage src={profileUser.avatar || "/placeholder.svg"} alt={profileUser.name || "User"} />
+                <AvatarFallback>{profileUser.name?.charAt(0) || "U"}</AvatarFallback>
+              </Avatar>
           </div>
         </div>
         
         <div className="mt-20 text-center">
-          <h1 className="text-2xl font-bold">{user.name || "Anonymous User"}</h1>
-          <p className="text-gray-600 mt-1">{user.username}</p>
-          <p className="mt-2 px-4">{user.bio || "No bio available"}</p>
+          <h1 className="text-2xl font-bold">{profileUser.name || "Anonymous User"}</h1>
+          <p className="text-gray-600 mt-1">{profileUser.username}</p>
+          <p className="mt-2 px-4">{profileUser.bio || "No bio available"}</p>
         </div>
 
         <div className="flex justify-center space-x-4 mt-4">
-          {user?.id ? (
+          {user?.id === profileUser?.id ? (
             <>
               <Button variant="outline" size="sm">
                 <Edit className="w-4 h-4 mr-2" />
@@ -188,15 +211,15 @@ export default function Profile() {
 
         <div className="flex justify-center space-x-8 py-6 border-y border-gray-200 mt-6">
           <button onClick={() => setShowFollowing(true)} className="text-center">
-            <p className="font-semibold text-xl">{user.following?.toLocaleString() || 0}</p>
+            <p className="font-semibold text-xl">{profileUser.following?.toLocaleString() || 0}</p>
             <p className="text-gray-600 text-sm">Following</p>
           </button>
           <button onClick={() => setShowFollowers(true)} className="text-center">
-            <p className="font-semibold text-xl">{user.followers?.toLocaleString() || 0}</p>
+            <p className="font-semibold text-xl">{profileUser.followers?.toLocaleString() || 0}</p>
             <p className="text-gray-600 text-sm">Followers</p>
           </button>
           <div className="text-center">
-            <p className="font-semibold text-xl">{user.likes?.toLocaleString() || 0}</p>
+            <p className="font-semibold text-xl">{profileUser.likes?.toLocaleString() || 0}</p>
             <p className="text-gray-600 text-sm">Likes</p>
           </div>
         </div>

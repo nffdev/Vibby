@@ -100,9 +100,22 @@ const listMyVideos = async (req, res) => {
     return res.status(200).json(final);
 };
 
+const listUserVideos = async (req, res) => {
+    const userId = String(req.params.id || '').trim();
+    if (!userId) return res.status(400).json({ message: 'User id is required.' });
+    const videos = await Video.find({ userId }).sort({ createdAt: -1 }).limit(100);
+    const final = videos.map(v => {
+        const json = v.toJSON();
+        delete json._id; delete json.__v;
+        return json;
+    });
+    return res.status(200).json(final);
+};
+
 module.exports = {
     createVideo,
     listVideos,
     resolveVideo,
-    listMyVideos
+    listMyVideos,
+    listUserVideos
 };
