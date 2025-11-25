@@ -123,6 +123,22 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
     })
 
     onInteraction(type, video.id)
+    if (type === 'like') {
+      (async () => {
+        try {
+          const r = await fetch(`${BASE_API}/v${API_VERSION}/likes/${video.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } })
+          const j = await r.json()
+          if (!r.ok) {
+            toast.error(j.message || 'Like failed')
+          } else {
+            setCounts(prev => ({ ...prev, likes: typeof j.likes === 'number' ? j.likes : prev.likes }))
+            toast.success(j.liked ? 'Added to liked' : 'Removed from liked')
+          }
+        } catch {
+          toast.error('Network error')
+        }
+      })()
+    }
   }, [interaction, video.id, onInteraction])
 
   useEffect(() => {
@@ -326,7 +342,7 @@ export default function VideoScreen() {
             description: v.description,
             userId: v.userId,
             username: v.username,
-            likes: 0,
+            likes: typeof v.likes === 'number' ? v.likes : 0,
             dislikes: 0,
             comments: 0
           }))
