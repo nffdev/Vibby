@@ -137,6 +137,7 @@ function VideoPlayer({ video, onInteraction }) {
           className="object-cover w-full h-full"
           autoPlay
           muted
+          loop
         />
       ) : (
         <img

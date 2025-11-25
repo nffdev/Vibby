@@ -49,7 +49,7 @@ export default function VideoWatch() {
           <div className="text-white">{error}</div>
         ) : video && video.playback_id ? (
           <div className="relative w-full h-full">
-            <MuxPlayer playbackId={video.playback_id} streamType="on-demand" className="object-cover w-full h-full" autoPlay muted />
+            <MuxPlayer playbackId={video.playback_id} streamType="on-demand" className="object-cover w-full h-full" autoPlay muted loop />
             <div className="absolute left-2 bottom-24 text-white max-w-[70%]">
               {video.title && (<div className="text-lg font-semibold drop-shadow-md">{video.title}</div>)}
               {video.description && (<div className="text-sm opacity-90 drop-shadow-md">{video.description}</div>)}
