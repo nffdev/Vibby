@@ -4,18 +4,40 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import BottomNav from "@/components/nav/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react';
+import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X, MoreVertical } from 'lucide-react';
+import { toast } from 'sonner'
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BASE_API, API_VERSION } from "../config.json";
 
-const VideoGrid = ({ videos, onSelect }) => (
-  <div className="grid grid-cols-2 gap-4 p-4">
-    {videos.map((video) => (
-      <div key={video.id} className="relative rounded-lg overflow-hidden shadow-md cursor-pointer" onClick={() => onSelect(video.id)}>
+const VideoGrid = ({ videos, onSelect, isOwner }) => {
+  const VideoCard = ({ video }) => {
+    const [showMenu, setShowMenu] = useState(false)
+    return (
+      <div className="relative rounded-lg overflow-hidden shadow-md">
+        <button className="absolute inset-0" onClick={() => onSelect(video.id)} aria-label="open" />
         <img src={video.thumbnail} alt="" className="w-full h-40 object-cover" />
-        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
           <Play className="w-12 h-12 text-white" />
+        </div>
+        <div className="absolute top-2 right-2 z-10">
+          <div className="relative">
+            <Button variant="ghost" size="icon" className="bg-white/40 hover:bg-white/60" onClick={(e) => { e.stopPropagation(); setShowMenu(v => !v) }}>
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+            {showMenu && (
+              <div className="absolute top-8 right-0 bg-black/70 text-white rounded-md p-2 flex flex-col gap-2 min-w-[140px]">
+                {isOwner && (
+                  <Button variant="ghost" className="justify-start text-white hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setShowMenu(false); toast.success('Video deleted'); }}>
+                    Delete video
+                  </Button>
+                )}
+                <Button variant="ghost" className="justify-start text-white hover:bg-white/20" onClick={async (e) => { e.stopPropagation(); const url = `${window.location.origin}/video/${video.id}`; try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch {} setShowMenu(false); }}>
+                  Share
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="p-2 bg-white">
           <h3 className="font-semibold text-sm truncate">{video.title}</h3>
@@ -25,9 +47,17 @@ const VideoGrid = ({ videos, onSelect }) => (
           </div>
         </div>
       </div>
-    ))}
-  </div>
-);
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-4 p-4">
+      {videos.map((video) => (
+        <VideoCard key={video.id} video={video} />
+      ))}
+    </div>
+  )
+}
 
 const FollowOverlay = ({ title, users, onClose }) => (
   <>
@@ -239,7 +269,7 @@ export default function Profile() {
             {loadingVideos ? (
               <div className="h-48 flex items-center justify-center text-gray-500">Loading videos...</div>
             ) : videos.length ? (
-              <VideoGrid videos={videos} onSelect={(id) => navigate(`/video/${id}`)} />
+              <VideoGrid videos={videos} onSelect={(id) => navigate(`/video/${id}`)} isOwner={user?.id === profileUser?.id} />
             ) : (
               <div className="h-48 flex items-center justify-center text-gray-500">{error || 'No video'}</div>
             )}

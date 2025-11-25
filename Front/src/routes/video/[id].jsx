@@ -56,38 +56,40 @@ export default function VideoWatch() {
           <div className="relative w-full h-full">
             <MuxPlayer playbackId={video.playback_id} streamType="on-demand" className="object-cover w-full h-full" autoPlay muted loop />
             <div className="absolute top-2 right-2 z-10">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-white hover:bg-white/20"
-                onClick={() => setShowMenu(v => !v)}
-              >
-                <MoreVertical className="h-6 w-6" />
-              </Button>
-              {showMenu && (
-                <div className="mt-2 bg-black/60 backdrop-blur rounded-md p-2 flex flex-col gap-2 min-w-[140px]">
-                  {!(user?.id && user.id === video.userId) ? null : (
+              <div className="relative">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text白 hover:bg-white/20"
+                  onClick={() => setShowMenu(v => !v)}
+                >
+                  <MoreVertical className="h-6 w-6" />
+                </Button>
+                {showMenu && (
+                  <div className="absolute top-8 right-0 bg-black/60 backdrop-blur rounded-md p-2 flex flex-col gap-2 min-w-[140px]">
+                    {!(user?.id && user.id === video.userId) ? null : (
+                      <Button 
+                        variant="ghost" 
+                        className="justify-start text-white hover:bg-white/20"
+                        onClick={() => { setShowMenu(false); toast.success('Video deleted'); }}
+                      >
+                        Delete video
+                      </Button>
+                    )}
                     <Button 
                       variant="ghost" 
                       className="justify-start text-white hover:bg-white/20"
-                      onClick={() => { setShowMenu(false); toast.success('Video deleted'); }}
+                      onClick={async () => { 
+                        const url = `${window.location.origin}/video/${video.id}`;
+                        try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch { /* noop */ }
+                        setShowMenu(false);
+                      }}
                     >
-                      Delete video
+                      Share
                     </Button>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    className="justify-start text-white hover:bg-white/20"
-                    onClick={async () => { 
-                      const url = `${window.location.origin}/video/${video.id}`;
-                      try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch { /* noop */ }
-                      setShowMenu(false);
-                    }}
-                  >
-                    Share
-                  </Button>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="absolute left-2 bottom-24 text-white max-w-[70%]">
               {video.title && (<div className="text-lg font-semibold drop-shadow-md">{video.title}</div>)}
