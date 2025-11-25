@@ -135,8 +135,11 @@ export default function Profile() {
   const [showFollowing, setShowFollowing] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [videos, setVideos] = useState([]);
+  const [likedVideos, setLikedVideos] = useState([]);
   const [loadingVideos, setLoadingVideos] = useState(true);
+  const [loadingLiked, setLoadingLiked] = useState(false);
   const [error, setError] = useState('');
+  const [likedError, setLikedError] = useState('');
   const [profileUser, setProfileUser] = useState(null);
 
   useEffect(() => {
@@ -212,6 +215,60 @@ export default function Profile() {
     };
     loadVideos();
   }, [profileUser, user]);
+
+  useEffect(() => {
+    const loadLiked = async () => {
+      if (!profileUser) return;
+      if (activeTab !== 'liked') return;
+      setLoadingLiked(true);
+      setLikedError('');
+      try {
+        const isOwner = user?.id === profileUser?.id;
+        const url = isOwner ? `${BASE_API}/v${API_VERSION}/likes/me` : `${BASE_API}/v${API_VERSION}/likes/user/${profileUser.id}`;
+        const headers = isOwner ? { 'Authorization': localStorage.getItem('token') } : undefined;
+        const response = await fetch(url, { headers });
+        const json = await response.json();
+        if (!response.ok) {
+          setLikedError(json.message || 'Impossible to load liked videos.');
+          setLikedVideos([]);
+        } else {
+          let mapped = json.map(v => ({
+            id: v.id,
+            title: v.title || 'Untitled',
+            playback_id: v.playback_id,
+            thumbnail: v.playback_id ? `https://image.mux.com/${v.playback_id}/thumbnail.jpg` : `/placeholder.svg?text=${encodeURIComponent(v.title || 'Video')}`
+          }));
+
+          const toResolve = mapped.filter(v => !v.playback_id).map(v => v.id);
+          if (toResolve.length) {
+            const resolves = await Promise.all(toResolve.map(async (vid) => {
+              try {
+                const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${vid}/resolve`, { headers: { 'Authorization': localStorage.getItem('token') } });
+                const j = await r.json();
+                if (r.ok) return j;
+                return null;
+              } catch { return null; }
+            }));
+            const updates = resolves.filter(Boolean);
+            if (updates.length) {
+              mapped = mapped.map(v => {
+                const u = updates.find(x => x.id === v.id);
+                return u ? { ...v, playback_id: u.playback_id, thumbnail: u.playback_id ? `https://image.mux.com/${u.playback_id}/thumbnail.jpg` : v.thumbnail } : v;
+              });
+            }
+          }
+
+          setLikedVideos(mapped);
+        }
+      } catch {
+        setLikedError('Network error when loading liked videos.');
+        setLikedVideos([]);
+      } finally {
+        setLoadingLiked(false);
+      }
+    };
+    loadLiked();
+  }, [activeTab, profileUser, user]);
 
   const mockUsers = Array(20).fill().map((_, i) => ({
     name: `User ${i + 1}`,
@@ -299,7 +356,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <Tabs defaultValue="videos" className="w-full mt-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className="w-full mt-6">
           <TabsList className="w-full flex justify-around border-b">
             <TabsTrigger value="videos" className="flex-1 py-2">
               <Grid className="w-5 h-5 mr-2" />
@@ -325,9 +382,17 @@ export default function Profile() {
             )}
           </TabsContent>
           <TabsContent value="liked">
-            <div className="h-48 flex items-center justify-center text-gray-500">
-              Liked videos will appear here
-            </div>
+            {loadingLiked ? (
+              <div className="h-48 flex items-center justify-center text-gray-500">Loading liked videos...</div>
+            ) : likedVideos.length ? (
+              <VideoGrid 
+                videos={likedVideos} 
+                onSelect={(id) => navigate(`/video/${id}`)} 
+                isOwner={false}
+              />
+            ) : (
+              <div className="h-48 flex items-center justify-center text-gray-500">{likedError || 'No liked video'}</div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
