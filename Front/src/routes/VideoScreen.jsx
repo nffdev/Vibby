@@ -94,7 +94,7 @@ function ShareOverlay({ onClose }) {
 function VideoPlayer({ video, onInteraction, onDeleted }) {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [interaction, setInteraction] = useState(null)
+  const [interaction, setInteraction] = useState(video.liked ? 'like' : null)
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
 
@@ -140,6 +140,10 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
       })()
     }
   }, [interaction, video.id, onInteraction])
+
+  useEffect(() => {
+    setInteraction(video.liked ? 'like' : null)
+  }, [video.liked, video.id])
 
   useEffect(() => {
     let timer
@@ -344,9 +348,22 @@ export default function VideoScreen() {
             username: v.username,
             likes: typeof v.likes === 'number' ? v.likes : 0,
             dislikes: 0,
-            comments: 0
+            comments: 0,
+            liked: false
           }))
           setVideos(mapped)
+
+          const token = localStorage.getItem('token')
+          if (token) {
+            try {
+              const rLikes = await fetch(`${BASE_API}/v${API_VERSION}/likes/me`, { headers: { 'Authorization': token } })
+              const jLikes = await rLikes.json()
+              if (rLikes.ok && Array.isArray(jLikes)) {
+                const likedIds = new Set(jLikes.map(v => v.id))
+                setVideos(prev => prev.map(v => ({ ...v, liked: likedIds.has(v.id) })))
+              }
+            } catch {}
+          }
 
           const toResolve = mapped.filter(v => !v.playback_id).map(v => v.id)
           if (toResolve.length) {
