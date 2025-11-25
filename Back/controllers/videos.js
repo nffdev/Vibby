@@ -202,11 +202,37 @@ const deleteVideo = async (req, res) => {
     }
 };
 
+const computeMuxViewsForVideo = async (v) => {
+    try {
+        const authHeader = (MUX_TOKEN_ID && MUX_TOKEN_SECRET) ? { 'Authorization': `Basic ${Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString('base64')}` } : null;
+        if (!authHeader) return 0;
+        const dim = v.asset_id ? `asset_id:${v.asset_id}` : (v.playback_id ? `playback_id:${v.playback_id}` : null);
+        if (!dim) return 0;
+        let count = 0;
+        const r1 = await fetch(`https://api.mux.com/data/v1/video-views?filters[]=${encodeURIComponent(dim)}&timeframe[]=7:days&limit=1`, { headers: authHeader });
+        const j1 = await r1.json();
+        if (typeof j1?.total_row_count === 'number') count = j1.total_row_count;
+        if (!count) {
+            const r2 = await fetch(`https://api.mux.com/data/v1/metrics/views?filters[]=${encodeURIComponent(dim)}&timeframe[]=7:days`, { headers: authHeader });
+            const j2 = await r2.json();
+            if (j2 && Array.isArray(j2.data)) {
+                const totals = j2.data.find(x => x.name === 'totals');
+                const maybe = totals?.view_count;
+                if (typeof maybe === 'number') count = maybe;
+            }
+        }
+        return count || 0;
+    } catch {
+        return 0;
+    }
+}
+
 module.exports = {
     createVideo,
     listVideos,
     resolveVideo,
     listMyVideos,
     listUserVideos,
-    deleteVideo
+    deleteVideo,
+    computeMuxViewsForVideo
 };

@@ -1,5 +1,6 @@
 const Like = require('../models/Like');
 const Video = require('../models/Video');
+const { computeMuxViewsForVideo } = require('./videos');
 
 const toggle = async (req, res) => {
     try {
@@ -32,14 +33,15 @@ const listMe = async (req, res) => {
         const videos = videoIds.length ? await Video.find({ id: { $in: videoIds } }) : [];
         const byId = new Map(videos.map(v => [v.id, v]));
 
-        const final = videoIds
+        const final = await Promise.all(videoIds
             .map(id => byId.get(id))
             .filter(Boolean)
-            .map(v => {
+            .map(async v => {
                 const json = v.toJSON();
                 delete json._id; delete json.__v;
+                json.views = await computeMuxViewsForVideo(v);
                 return json;
-            });
+            }));
 
         return res.status(200).json(final);
     } catch {
@@ -56,14 +58,15 @@ const listUser = async (req, res) => {
         const videos = videoIds.length ? await Video.find({ id: { $in: videoIds } }) : [];
         const byId = new Map(videos.map(v => [v.id, v]));
 
-        const final = videoIds
+        const final = await Promise.all(videoIds
             .map(id => byId.get(id))
             .filter(Boolean)
-            .map(v => {
+            .map(async v => {
                 const json = v.toJSON();
                 delete json._id; delete json.__v;
+                json.views = await computeMuxViewsForVideo(v);
                 return json;
-            });
+            }));
 
         return res.status(200).json(final);
     } catch {
