@@ -177,7 +177,7 @@ export default function Profile() {
         
         <div className="mt-20 text-center">
           <h1 className="text-2xl font-bold">{profileUser.name || "Anonymous User"}</h1>
-          <p className="text-gray-600 mt-1">{profileUser.username}</p>
+          <p className="text-gray-600 mt-1">{profileUser.username ? `@${profileUser.username}` : ''}</p>
           <p className="mt-2 px-4">{profileUser.bio || "No bio available"}</p>
         </div>
 
