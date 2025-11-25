@@ -159,17 +159,31 @@ export default function Profile() {
         </div>
 
         <div className="flex justify-center space-x-4 mt-4">
-          <Button variant="outline" size="sm">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Follow
-          </Button>
-          <Button variant="outline" size="sm">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Message
-          </Button>
-          <Button variant="outline" size="sm">
-            <Share2 className="w-4 h-4" />
-          </Button>
+          {user?.id ? (
+            <>
+              <Button variant="outline" size="sm">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Profile
+              </Button>
+              <Button variant="outline" size="sm">
+                <Share2 className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" size="sm">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Follow
+              </Button>
+              <Button variant="outline" size="sm">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Message
+              </Button>
+              <Button variant="outline" size="sm">
+                <Share2 className="w-4 h-4" />
+              </Button>
+            </>
+          )}
         </div>
 
         <div className="flex justify-center space-x-8 py-6 border-y border-gray-200 mt-6">
