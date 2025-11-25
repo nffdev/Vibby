@@ -52,9 +52,53 @@ const completeOnboarding = async (req, res) => {
 }
 
 const editMe = async (req, res) => {
-    console.log(req.body);
+    try {
+        const { name, bio, avatar, interests } = req.body || {};
 
-    return res.status(400).json({ error: 'NOT_IMPLEMENTED', message: 'Not implemented.' });
+        const updates = {};
+
+        if (typeof name !== 'undefined') {
+            if (typeof name !== 'string') return res.status(400).json({ message: 'Full name must be a string.' });
+            const trimmed = name.trim();
+            if (trimmed.length < 3 || trimmed.length > 50) return res.status(400).json({ message: 'Full name must be between 3 and 50 characters long.' });
+            if (utils.hasBadWords(trimmed)) return res.status(400).json({ message: 'Full name includes a blacklisted word.' });
+            updates.name = trimmed;
+        }
+
+        if (typeof bio !== 'undefined') {
+            if (typeof bio !== 'string') return res.status(400).json({ message: 'Bio must be a string.' });
+            const trimmed = bio.trim();
+            if (trimmed.length > 150) return res.status(400).json({ message: 'Bio must be at most 150 characters long.' });
+            updates.bio = trimmed;
+        }
+
+        if (typeof avatar !== 'undefined') {
+            if (typeof avatar !== 'string') return res.status(400).json({ message: 'Avatar must be a base64 data URL string.' });
+            updates.avatar = avatar;
+        }
+
+        if (typeof interests !== 'undefined') {
+            if (!Array.isArray(interests)) return res.status(400).json({ message: 'Interests must be an array.' });
+            const filtered = interests.filter(interest => allowedInterests.includes(interest));
+            updates.interests = filtered;
+        }
+
+        if (!Object.keys(updates).length) return res.status(400).json({ message: 'No valid fields to update.' });
+
+        const profile = await Profile.findOneAndUpdate(
+            { id: req.user.id },
+            { ...updates, updatedAt: new Date() },
+            { new: true }
+        );
+
+        if (!profile) return res.status(404).json({ message: 'Profile not found.' });
+
+        const final = profile.toJSON();
+        delete final._id; delete final.__v;
+        return res.status(200).json(final);
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
 }
 
 const getByUsername = async (req, res) => {
