@@ -20,7 +20,7 @@ export function AuthWrapper({ children }) {
 	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/dash/dashboard');
 
 	useEffect(() => {
-		if (!['/dash', '/profile', '/upload'].some(path => window.location.pathname.startsWith(path)) || !auth || (user && user.id)) return;
+		if (!['/dash', '/profile', '/upload', '/videoscreen'].some(path => window.location.pathname.startsWith(path)) || !auth || (user && user.id)) return;
 		setIsLoading(true);
 
 		async function getUser() {
@@ -47,7 +47,7 @@ export function AuthWrapper({ children }) {
 	}, [location]);
 
 	if (onboarding) return <>{children}</>;
-	if (!['/dash', '/profile', '/upload'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
+	if (!['/dash', '/profile', '/upload', '/videoscreen'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
 	if (user && user.id) return <>{children}</>;
 	if (!auth) return <Login />;
 

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useAuth } from "@/lib/hooks/useAuth"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -89,6 +90,7 @@ function ShareOverlay({ onClose }) {
 
 function VideoPlayer({ video, onInteraction }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [interaction, setInteraction] = useState(null)
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
@@ -177,12 +179,14 @@ function VideoPlayer({ video, onInteraction }) {
         )}
       </AnimatePresence>
       <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
-        <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group">
-          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
-            <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">Follow</span>
-        </Button>
+        {!(user?.id && user.id === video.userId) && (
+          <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group">
+            <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
+              <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+            </div>
+            <span className="text-xs sm:text-sm md:text-base mt-2">Follow</span>
+          </Button>
+        )}
 
         <Button 
           variant="ghost" 
