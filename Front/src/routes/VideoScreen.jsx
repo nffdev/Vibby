@@ -155,9 +155,9 @@ function VideoPlayer({ video, onInteraction }) {
         {video.description && (
           <div className="text-sm sm:text-base opacity-90 drop-shadow-md">{video.description}</div>
         )}
-        {video.userId && (
-          <button onClick={() => navigate(`/profile?id=${video.userId}`)} className="text-xs sm:text-sm opacity-90 drop-shadow-md underline">
-            by {video.userId}
+        {(video.username || video.userId) && (
+          <button onClick={() => navigate(video.username ? `/profile?u=${video.username}` : `/profile?id=${video.userId}`)} className="text-xs sm:text-sm opacity-90 drop-shadow-md underline">
+            by {video.username ? `@${video.username}` : video.userId}
           </button>
         )}
       </div>
@@ -280,6 +280,7 @@ export default function VideoScreen() {
             title: v.title,
             description: v.description,
             userId: v.userId,
+            username: v.username,
             likes: 0,
             dislikes: 0,
             comments: 0

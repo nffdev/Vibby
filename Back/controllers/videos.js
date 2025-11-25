@@ -1,6 +1,7 @@
 const crypto = require('node:crypto');
 const Video = require('../models/Video');
 const fetch = require('node-fetch').default;
+const Profile = require('../models/Profile');
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
@@ -31,10 +32,14 @@ const createVideo = async (req, res) => {
 const listVideos = async (req, res) => {
     const videos = await Video.find({}).sort({ createdAt: -1 }).limit(50);
 
+    const userIds = [...new Set(videos.map(v => v.userId).filter(Boolean))];
+    const profiles = userIds.length ? await Profile.find({ id: { $in: userIds } }) : [];
+    const usernameById = new Map(profiles.map(p => [p.id, p.username]));
+
     const final = videos.map(v => {
         const json = v.toJSON();
-        delete json._id;
-        delete json.__v;
+        delete json._id; delete json.__v;
+        json.username = usernameById.get(json.userId);
         return json;
     });
 
@@ -92,9 +97,12 @@ const resolveVideo = async (req, res) => {
 
 const listMyVideos = async (req, res) => {
     const videos = await Video.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100);
+    const profile = await Profile.findOne({ id: req.user.id });
+    const username = profile?.username;
     const final = videos.map(v => {
         const json = v.toJSON();
         delete json._id; delete json.__v;
+        json.username = username;
         return json;
     });
     return res.status(200).json(final);
@@ -104,9 +112,12 @@ const listUserVideos = async (req, res) => {
     const userId = String(req.params.id || '').trim();
     if (!userId) return res.status(400).json({ message: 'User id is required.' });
     const videos = await Video.find({ userId }).sort({ createdAt: -1 }).limit(100);
+    const profile = await Profile.findOne({ id: userId });
+    const username = profile?.username;
     const final = videos.map(v => {
         const json = v.toJSON();
         delete json._id; delete json.__v;
+        json.username = username;
         return json;
     });
     return res.status(200).json(final);
