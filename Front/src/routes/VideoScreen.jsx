@@ -88,6 +88,7 @@ function ShareOverlay({ onClose }) {
 }
 
 function VideoPlayer({ video, onInteraction }) {
+  const navigate = useNavigate()
   const [interaction, setInteraction] = useState(null)
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
@@ -152,7 +153,9 @@ function VideoPlayer({ video, onInteraction }) {
           <div className="text-sm sm:text-base opacity-90 drop-shadow-md">{video.description}</div>
         )}
         {video.userId && (
-          <div className="text-xs sm:text-sm opacity-80 drop-shadow-md">by {video.userId}</div>
+          <button onClick={() => navigate(`/profile?id=${video.userId}`)} className="text-xs sm:text-sm opacity-90 drop-shadow-md underline">
+            by {video.userId}
+          </button>
         )}
       </div>
       <AnimatePresence>
