@@ -90,8 +90,19 @@ const resolveVideo = async (req, res) => {
     }
 };
 
+const listMyVideos = async (req, res) => {
+    const videos = await Video.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100);
+    const final = videos.map(v => {
+        const json = v.toJSON();
+        delete json._id; delete json.__v;
+        return json;
+    });
+    return res.status(200).json(final);
+};
+
 module.exports = {
     createVideo,
     listVideos,
-    resolveVideo
+    resolveVideo,
+    listMyVideos
 };

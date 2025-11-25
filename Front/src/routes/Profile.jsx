@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import BottomNav from "@/components/nav/BottomNav";
@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react';
 import { useAuth } from "@/lib/hooks/useAuth";
+import { BASE_API, API_VERSION } from "../config.json";
 
 const VideoGrid = ({ videos }) => (
   <div className="grid grid-cols-2 gap-4 p-4">
-    {videos.map((video, index) => (
-      <div key={index} className="relative rounded-lg overflow-hidden shadow-md">
+    {videos.map((video) => (
+      <div key={video.id} className="relative rounded-lg overflow-hidden shadow-md">
         <img src={video.thumbnail} alt="" className="w-full h-40 object-cover" />
         <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
           <Play className="w-12 h-12 text-white" />
@@ -69,13 +70,62 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("videos");
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+  const [videos, setVideos] = useState([]);
+  const [loadingVideos, setLoadingVideos] = useState(true);
+  const [error, setError] = useState('');
 
-  const videos = Array(6).fill().map((_, i) => ({
-    id: i,
-    thumbnail: `/placeholder.svg?text=Video${i + 1}`,
-    title: `Video ${i + 1}`,
-    views: `${Math.floor(Math.random() * 100)}K`
-  }));
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+      setLoadingVideos(true);
+      setError('');
+      try {
+        const response = await fetch(`${BASE_API}/v${API_VERSION}/videos/me`, {
+          headers: { 'Authorization': localStorage.getItem('token') }
+        });
+        const json = await response.json();
+        if (!response.ok) {
+          setError(json.message || 'Impossible to load videos.');
+          setVideos([]);
+        } else {
+          let mapped = json.map(v => ({
+            id: v.id,
+            title: v.title || 'Untitled',
+            views: 0,
+            playback_id: v.playback_id,
+            thumbnail: v.playback_id ? `https://image.mux.com/${v.playback_id}/thumbnail.jpg` : `/placeholder.svg?text=${encodeURIComponent(v.title || 'Video')}`
+          }));
+
+          const toResolve = mapped.filter(v => !v.playback_id).map(v => v.id);
+          if (toResolve.length) {
+            const resolves = await Promise.all(toResolve.map(async (vid) => {
+              try {
+                const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${vid}/resolve`, { headers: { 'Authorization': localStorage.getItem('token') } });
+                const j = await r.json();
+                if (r.ok) return j;
+                return null;
+              } catch { return null; }
+            }));
+            const updates = resolves.filter(Boolean);
+            if (updates.length) {
+              mapped = mapped.map(v => {
+                const u = updates.find(x => x.id === v.id);
+                return u ? { ...v, playback_id: u.playback_id, thumbnail: u.playback_id ? `https://image.mux.com/${u.playback_id}/thumbnail.jpg` : v.thumbnail } : v;
+              });
+            }
+          }
+
+          setVideos(mapped);
+        }
+      } catch {
+        setError('Network error when loading videos.');
+        setVideos([]);
+      } finally {
+        setLoadingVideos(false);
+      }
+    };
+    load();
+  }, [user]);
 
   const mockUsers = Array(20).fill().map((_, i) => ({
     name: `User ${i + 1}`,
@@ -147,7 +197,13 @@ export default function Profile() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="videos">
-            <VideoGrid videos={videos} />
+            {loadingVideos ? (
+              <div className="h-48 flex items-center justify-center text-gray-500">Loading videos...</div>
+            ) : videos.length ? (
+              <VideoGrid videos={videos} />
+            ) : (
+              <div className="h-48 flex items-center justify-center text-gray-500">{error || 'No video'}</div>
+            )}
           </TabsContent>
           <TabsContent value="liked">
             <div className="h-48 flex items-center justify-center text-gray-500">
