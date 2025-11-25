@@ -73,7 +73,7 @@ const VideoGrid = ({ videos, onSelect, isOwner, onDeleted }) => {
           <h3 className="font-semibold text-sm truncate">{video.title}</h3>
           <div className="flex items-center text-xs text-gray-500 mt-1">
             <Play className="w-3 h-3 mr-1" />
-            <span>{video.views} views</span>
+            <span>{typeof video.views === 'number' ? video.views.toLocaleString() : 0} views</span>
           </div>
         </div>
       </div>
@@ -235,6 +235,7 @@ export default function Profile() {
           let mapped = json.map(v => ({
             id: v.id,
             title: v.title || 'Untitled',
+            views: typeof v.views === 'number' ? v.views : 0,
             playback_id: v.playback_id,
             thumbnail: v.playback_id ? `https://image.mux.com/${v.playback_id}/thumbnail.jpg` : `/placeholder.svg?text=${encodeURIComponent(v.title || 'Video')}`
           }));
