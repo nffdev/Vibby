@@ -60,7 +60,7 @@ export default function VideoWatch() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text白 hover:bg-white/20"
+                  className="text-white hover:bg-white/20"
                   onClick={() => setShowMenu(v => !v)}
                 >
                   <MoreVertical className="h-6 w-6" />
@@ -71,7 +71,19 @@ export default function VideoWatch() {
                       <Button 
                         variant="ghost" 
                         className="justify-start text-white hover:bg-white/20"
-                        onClick={() => { setShowMenu(false); toast.success('Video deleted'); }}
+                        onClick={async () => { 
+                          try {
+                            const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${video.id}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') }})
+                            const j = await r.json()
+                            if (!r.ok) {
+                              toast.error(j.message || 'Delete failed')
+                            } else {
+                              toast.success('Video deleted')
+                              navigate(-1)
+                            }
+                          } catch { toast.error('Network error') }
+                          setShowMenu(false)
+                        }}
                       >
                         Delete video
                       </Button>

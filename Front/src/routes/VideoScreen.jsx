@@ -89,7 +89,7 @@ function ShareOverlay({ onClose }) {
   )
 }
 
-function VideoPlayer({ video, onInteraction }) {
+function VideoPlayer({ video, onInteraction, onDeleted }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [interaction, setInteraction] = useState(null)
@@ -179,7 +179,19 @@ function VideoPlayer({ video, onInteraction }) {
                 <Button 
                   variant="ghost" 
                   className="justify-start text-white hover:bg-white/20"
-                  onClick={() => { setShowMenu(false); toast.success('Video deleted'); }}
+                  onClick={async () => { 
+                    try {
+                      const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${video.id}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') }})
+                      const j = await r.json()
+                      if (!r.ok) {
+                        toast.error(j.message || 'Delete failed')
+                      } else {
+                        toast.success('Video deleted')
+                        onDeleted && onDeleted(video.id)
+                      }
+                    } catch { toast.error('Network error') }
+                    setShowMenu(false)
+                  }}
                 >
                   Delete video
                 </Button>
@@ -436,6 +448,7 @@ export default function VideoScreen() {
             <VideoPlayer 
               video={video} 
               onInteraction={manageInteraction}
+              onDeleted={(id) => setVideos(prev => prev.filter(v => v.id !== id))}
             />
           </div>
         )) : (

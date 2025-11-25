@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BASE_API, API_VERSION } from "../config.json";
 
-const VideoGrid = ({ videos, onSelect, isOwner }) => {
+const VideoGrid = ({ videos, onSelect, isOwner, onDeleted }) => {
   const VideoCard = ({ video }) => {
     const [showMenu, setShowMenu] = useState(false)
     return (
@@ -27,11 +27,28 @@ const VideoGrid = ({ videos, onSelect, isOwner }) => {
             </Button>
             {showMenu && (
               <div className="absolute top-8 right-0 bg-black/70 text-white rounded-md p-2 flex flex-col gap-2 min-w-[140px]">
-                {isOwner && (
-                  <Button variant="ghost" className="justify-start text-white hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setShowMenu(false); toast.success('Video deleted'); }}>
-                    Delete video
-                  </Button>
-                )}
+              {isOwner && (
+                <Button 
+                  variant="ghost" 
+                  className="justify-start text-white hover:bg-white/20" 
+                  onClick={async (e) => { 
+                    e.stopPropagation(); 
+                    try {
+                      const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${video.id}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') }})
+                      const j = await r.json()
+                      if (!r.ok) {
+                        toast.error(j.message || 'Delete failed')
+                      } else {
+                        toast.success('Video deleted')
+                        onDeleted && onDeleted(video.id)
+                      }
+                    } catch { toast.error('Network error') }
+                    setShowMenu(false);
+                  }}
+                >
+                  Delete video
+                </Button>
+              )}
                 <Button variant="ghost" className="justify-start text-white hover:bg-white/20" onClick={async (e) => { e.stopPropagation(); const url = `${window.location.origin}/video/${video.id}`; try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch {} setShowMenu(false); }}>
                   Share
                 </Button>
@@ -269,7 +286,12 @@ export default function Profile() {
             {loadingVideos ? (
               <div className="h-48 flex items-center justify-center text-gray-500">Loading videos...</div>
             ) : videos.length ? (
-              <VideoGrid videos={videos} onSelect={(id) => navigate(`/video/${id}`)} isOwner={user?.id === profileUser?.id} />
+              <VideoGrid 
+                videos={videos} 
+                onSelect={(id) => navigate(`/video/${id}`)} 
+                isOwner={user?.id === profileUser?.id}
+                onDeleted={(id) => setVideos(prev => prev.filter(v => v.id !== id))}
+              />
             ) : (
               <div className="h-48 flex items-center justify-center text-gray-500">{error || 'No video'}</div>
             )}
