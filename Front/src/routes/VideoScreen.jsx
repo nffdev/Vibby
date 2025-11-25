@@ -6,7 +6,8 @@ import { useAuth } from "@/lib/hooks/useAuth"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X, Search } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X, Search, MoreVertical } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from "@/lib/utils"
 import MuxPlayer from '@mux/mux-player-react'
 import { BASE_API, API_VERSION } from "../config.json"
@@ -94,6 +95,7 @@ function VideoPlayer({ video, onInteraction }) {
   const [interaction, setInteraction] = useState(null)
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
   const manageInteraction = useCallback((type) => {
     setInteraction((prev) => {
@@ -159,6 +161,40 @@ function VideoPlayer({ video, onInteraction }) {
           <button onClick={() => navigate(video.username ? `/profile?u=${video.username}` : `/profile?id=${video.userId}`)} className="text-xs sm:text-sm opacity-90 drop-shadow-md underline">
             by {video.username ? `@${video.username}` : video.userId}
           </button>
+        )}
+      </div>
+      <div className="absolute top-2 right-2 z-10">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-white hover:bg-white/20"
+          onClick={() => setShowMenu(v => !v)}
+        >
+          <MoreVertical className="h-6 w-6" />
+        </Button>
+        {showMenu && (
+          <div className="mt-2 bg-black/60 backdrop-blur rounded-md p-2 flex flex-col gap-2 min-w-[140px]">
+            {!(user?.id && user.id === video.userId) ? null : (
+              <Button 
+                variant="ghost" 
+                className="justify-start text-white hover:bg-white/20"
+                onClick={() => { setShowMenu(false); toast.success('Video deleted'); }}
+              >
+                Delete video
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              className="justify-start text-white hover:bg-white/20"
+              onClick={async () => { 
+                const url = `${window.location.origin}/video/${video.id}`;
+                try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch { /* noop */ }
+                setShowMenu(false);
+              }}
+            >
+              Share
+            </Button>
+          </div>
         )}
       </div>
       <AnimatePresence>

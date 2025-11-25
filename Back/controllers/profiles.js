@@ -41,8 +41,6 @@ const completeOnboarding = async (req, res) => {
     if (name.length < 3 || name.length > 50) return res.status(400).json({ message: 'Full name must be between 3 and 50 characters long.' });
     if (utils.hasBadWords(name)) return res.status(400).json({ message: 'Full name includes a blacklisted word.' });
 
-    // TODO: implement avatar verification & upload
-
     const filteredInterests = interests.filter(interest => allowedInterests.includes(interest));
 
     const profile = await Profile.findOne({ id: req.user.id });
