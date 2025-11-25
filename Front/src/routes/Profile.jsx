@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react';
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useNavigate } from 'react-router-dom'
 import { BASE_API, API_VERSION } from "../config.json";
 
-const VideoGrid = ({ videos }) => (
+const VideoGrid = ({ videos, onSelect }) => (
   <div className="grid grid-cols-2 gap-4 p-4">
     {videos.map((video) => (
-      <div key={video.id} className="relative rounded-lg overflow-hidden shadow-md">
+      <div key={video.id} className="relative rounded-lg overflow-hidden shadow-md cursor-pointer" onClick={() => onSelect(video.id)}>
         <img src={video.thumbnail} alt="" className="w-full h-40 object-cover" />
         <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
           <Play className="w-12 h-12 text-white" />
@@ -67,6 +68,7 @@ const FollowOverlay = ({ title, users, onClose }) => (
 
 export default function Profile() {
   const { user } = useAuth(); 
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("videos");
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
@@ -200,7 +202,7 @@ export default function Profile() {
             {loadingVideos ? (
               <div className="h-48 flex items-center justify-center text-gray-500">Loading videos...</div>
             ) : videos.length ? (
-              <VideoGrid videos={videos} />
+              <VideoGrid videos={videos} onSelect={(id) => navigate(`/video/${id}`)} />
             ) : (
               <div className="h-48 flex items-center justify-center text-gray-500">{error || 'No video'}</div>
             )}
