@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthWrapper } from "@/lib/hooks/useAuth";
 import { UserContextProvider } from "@/lib/contexts/userContext";
 import useRouter from "@/lib/hooks/useRouter";
@@ -16,6 +17,7 @@ export default function App() {
             ))}
             <Route path="*" element={<h1>404: Not found</h1>} />
           </Routes>
+          <Toaster />
         </AuthWrapper>
       </UserContextProvider>
     </BrowserRouter>
