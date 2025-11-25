@@ -12,7 +12,7 @@ app.use(bodyParser.json({ limit: '5mb' }));
 
 app.use(cors({
     origin: ['http://localhost:5173', 'http://192.168.1.80:5173'],
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST', 'DELETE']
 }));
 
 app.listen(process.env.PORT, () => console.log(`Server listening on port ${process.env.PORT}`))

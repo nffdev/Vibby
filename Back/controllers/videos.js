@@ -123,10 +123,38 @@ const listUserVideos = async (req, res) => {
     return res.status(200).json(final);
 };
 
+const deleteVideo = async (req, res) => {
+    try {
+        const id = String(req.params.id || '').trim();
+        if (!id) return res.status(400).json({ message: 'Video id is required.' });
+
+        const video = await Video.findOne({ id });
+        if (!video) return res.status(404).json({ message: 'Video not found.' });
+        if (video.userId !== req.user.id) return res.status(403).json({ message: 'Forbidden.' });
+
+        try {
+            if (MUX_TOKEN_ID && MUX_TOKEN_SECRET) {
+                const auth = { 'Authorization': `Basic ${Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString('base64')}` };
+                if (video.asset_id) {
+                    await fetch(`https://api.mux.com/video/v1/assets/${video.asset_id}`, { method: 'DELETE', headers: auth });
+                } else if (video.upload_id) {
+                    await fetch(`https://api.mux.com/video/v1/uploads/${video.upload_id}`, { method: 'DELETE', headers: auth });
+                }
+            }
+        } catch {}
+
+        await Video.deleteOne({ id });
+        return res.status(200).json({ message: 'Video deleted.' });
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
+};
+
 module.exports = {
     createVideo,
     listVideos,
     resolveVideo,
     listMyVideos,
-    listUserVideos
+    listUserVideos,
+    deleteVideo
 };
