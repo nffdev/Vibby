@@ -235,7 +235,7 @@ export default function Profile() {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Profile
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={async () => { const url = profileUser.username ? `${window.location.origin}/profile?u=${profileUser.username}` : `${window.location.origin}/profile?id=${profileUser.id}`; try { await navigator.clipboard.writeText(url); toast.success('Profile link copied'); } catch { toast.error('Copy failed'); } }}>
                 <Share2 className="w-4 h-4" />
               </Button>
             </>
@@ -249,7 +249,7 @@ export default function Profile() {
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Message
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={async () => { const url = profileUser.username ? `${window.location.origin}/profile?u=${profileUser.username}` : `${window.location.origin}/profile?id=${profileUser.id}`; try { await navigator.clipboard.writeText(url); toast.success('Profile link copied'); } catch { toast.error('Copy failed'); } }}>
                 <Share2 className="w-4 h-4" />
               </Button>
             </>
