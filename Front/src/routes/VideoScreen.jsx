@@ -6,7 +6,9 @@ import { useAuth } from "@/lib/hooks/useAuth"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X, Search, MoreVertical } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, X, Search } from 'lucide-react'
+import ActionMenu from '@/components/ui/ActionMenu'
+import CopyButton from '@/components/ui/CopyButton'
 import { toast } from 'sonner'
 import { cn } from "@/lib/utils"
 import MuxPlayer from '@mux/mux-player-react'
@@ -95,7 +97,6 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
   const [interaction, setInteraction] = useState(null)
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
 
   const manageInteraction = useCallback((type) => {
     setInteraction((prev) => {
@@ -164,17 +165,12 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
         )}
       </div>
       <div className="absolute top-2 right-2 z-10">
-        <div className="relative">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:bg-white/20"
-            onClick={() => setShowMenu(v => !v)}
-          >
-            <MoreVertical className="h-6 w-6" />
-          </Button>
-          {showMenu && (
-            <div className="absolute top-8 right-0 bg-black/60 backdrop-blur rounded-md p-2 flex flex-col gap-2 min-w-[140px]">
+        <ActionMenu
+          triggerClassName="text-white hover:bg-white/20"
+          menuClassName="bg-black/60 backdrop-blur text-white"
+        >
+          {({ close }) => (
+            <>
               {!(user?.id && user.id === video.userId) ? null : (
                 <Button 
                   variant="ghost" 
@@ -190,26 +186,25 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
                         onDeleted && onDeleted(video.id)
                       }
                     } catch { toast.error('Network error') }
-                    setShowMenu(false)
+                    close()
                   }}
                 >
                   Delete video
                 </Button>
               )}
-              <Button 
-                variant="ghost" 
+              <CopyButton
+                variant="ghost"
+                size="default"
                 className="justify-start text-white hover:bg-white/20"
-                onClick={async () => { 
-                  const url = `${window.location.origin}/video/${video.id}`;
-                  try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch { /* noop */ }
-                  setShowMenu(false);
-                }}
+                text={`${window.location.origin}/video/${video.id}`}
+                onCopied={() => { close() }}
+                successMessage="Link copied"
               >
                 Share
-              </Button>
-            </div>
+              </CopyButton>
+            </>
           )}
-        </div>
+        </ActionMenu>
       </div>
       <AnimatePresence>
         {showThumb && (

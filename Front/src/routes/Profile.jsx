@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import BottomNav from "@/components/nav/BottomNav";
 import { Button } from "@/components/ui/button";
+import ActionMenu from "@/components/ui/ActionMenu";
+import CopyButton from "@/components/ui/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X, MoreVertical } from 'lucide-react';
+import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react';
 import { toast } from 'sonner'
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -12,7 +14,6 @@ import { BASE_API, API_VERSION } from "../config.json";
 
 const VideoGrid = ({ videos, onSelect, isOwner, onDeleted }) => {
   const VideoCard = ({ video }) => {
-    const [showMenu, setShowMenu] = useState(false)
     return (
       <div className="relative rounded-lg overflow-hidden shadow-md">
         <button className="absolute inset-0" onClick={() => onSelect(video.id)} aria-label="open" />
@@ -21,40 +22,49 @@ const VideoGrid = ({ videos, onSelect, isOwner, onDeleted }) => {
           <Play className="w-12 h-12 text-white" />
         </div>
         <div className="absolute top-2 right-2 z-10">
-          <div className="relative">
-            <Button variant="ghost" size="icon" className="bg-white/40 hover:bg-white/60" onClick={(e) => { e.stopPropagation(); setShowMenu(v => !v) }}>
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-            {showMenu && (
-              <div className="absolute top-8 right-0 bg-black/70 text-white rounded-md p-2 flex flex-col gap-2 min-w-[140px]">
-              {isOwner && (
-                <Button 
-                  variant="ghost" 
-                  className="justify-start text-white hover:bg-white/20" 
-                  onClick={async (e) => { 
-                    e.stopPropagation(); 
-                    try {
-                      const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${video.id}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') }})
-                      const j = await r.json()
-                      if (!r.ok) {
-                        toast.error(j.message || 'Delete failed')
-                      } else {
-                        toast.success('Video deleted')
-                        onDeleted && onDeleted(video.id)
-                      }
-                    } catch { toast.error('Network error') }
-                    setShowMenu(false);
-                  }}
+          <ActionMenu
+            stopPropagation
+            triggerClassName="bg-white/40 hover:bg-white/60"
+            menuClassName="bg-black/70 text-white"
+          >
+            {({ close }) => (
+              <>
+                {isOwner && (
+                  <Button 
+                    variant="ghost" 
+                    className="justify-start text-white hover:bg-white/20" 
+                    onClick={async (e) => { 
+                      e.stopPropagation(); 
+                      try {
+                        const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${video.id}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') }})
+                        const j = await r.json()
+                        if (!r.ok) {
+                          toast.error(j.message || 'Delete failed')
+                        } else {
+                          toast.success('Video deleted')
+                          onDeleted && onDeleted(video.id)
+                        }
+                      } catch { toast.error('Network error') }
+                      close();
+                    }}
+                  >
+                    Delete video
+                  </Button>
+                )}
+                <CopyButton
+                  variant="ghost"
+                  size="default"
+                  className="justify-start text-white hover:bg-white/20"
+                  stopPropagation
+                  text={`${window.location.origin}/video/${video.id}`}
+                  onCopied={() => { close() }}
+                  successMessage="Link copied"
                 >
-                  Delete video
-                </Button>
-              )}
-                <Button variant="ghost" className="justify-start text-white hover:bg-white/20" onClick={async (e) => { e.stopPropagation(); const url = `${window.location.origin}/video/${video.id}`; try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch {} setShowMenu(false); }}>
                   Share
-                </Button>
-              </div>
+                </CopyButton>
+              </>
             )}
-          </div>
+          </ActionMenu>
         </div>
         <div className="p-2 bg-white">
           <h3 className="font-semibold text-sm truncate">{video.title}</h3>
@@ -235,9 +245,16 @@ export default function Profile() {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Profile
               </Button>
-              <Button variant="outline" size="sm" onClick={async () => { const url = profileUser.username ? `${window.location.origin}/profile?u=${profileUser.username}` : `${window.location.origin}/profile?id=${profileUser.id}`; try { await navigator.clipboard.writeText(url); toast.success('Profile link copied'); } catch { toast.error('Copy failed'); } }}>
+              <CopyButton
+                variant="outline"
+                size="sm"
+                className=""
+                text={profileUser.username ? `${window.location.origin}/profile?u=${profileUser.username}` : `${window.location.origin}/profile?id=${profileUser.id}`}
+                successMessage="Profile link copied"
+                errorMessage="Copy failed"
+              >
                 <Share2 className="w-4 h-4" />
-              </Button>
+              </CopyButton>
             </>
           ) : (
             <>
@@ -249,9 +266,16 @@ export default function Profile() {
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Message
               </Button>
-              <Button variant="outline" size="sm" onClick={async () => { const url = profileUser.username ? `${window.location.origin}/profile?u=${profileUser.username}` : `${window.location.origin}/profile?id=${profileUser.id}`; try { await navigator.clipboard.writeText(url); toast.success('Profile link copied'); } catch { toast.error('Copy failed'); } }}>
+              <CopyButton
+                variant="outline"
+                size="sm"
+                className=""
+                text={profileUser.username ? `${window.location.origin}/profile?u=${profileUser.username}` : `${window.location.origin}/profile?id=${profileUser.id}`}
+                successMessage="Profile link copied"
+                errorMessage="Copy failed"
+              >
                 <Share2 className="w-4 h-4" />
-              </Button>
+              </CopyButton>
             </>
           )}
         </div>

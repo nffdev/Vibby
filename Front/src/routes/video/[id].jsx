@@ -5,7 +5,8 @@ import BottomNav from '@/components/nav/BottomNav'
 import MuxPlayer from '@mux/mux-player-react'
 import { ArrowLeft } from 'lucide-react'
 import { BASE_API, API_VERSION } from '../../config.json'
-import { MoreVertical } from 'lucide-react'
+import ActionMenu from '@/components/ui/ActionMenu'
+import CopyButton from '@/components/ui/CopyButton'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/hooks/useAuth'
 
@@ -16,7 +17,6 @@ export default function VideoWatch() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
-  const [showMenu, setShowMenu] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -57,50 +57,46 @@ export default function VideoWatch() {
             <MuxPlayer playbackId={video.playback_id} streamType="on-demand" className="object-cover w-full h-full" autoPlay muted loop />
             <div className="absolute top-2 right-2 z-10">
               <div className="relative">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-white hover:bg-white/20"
-                  onClick={() => setShowMenu(v => !v)}
+                <ActionMenu
+                  triggerClassName="text-white hover:bg-white/20"
+                  menuClassName="bg-black/60 backdrop-blur text-white"
                 >
-                  <MoreVertical className="h-6 w-6" />
-                </Button>
-                {showMenu && (
-                  <div className="absolute top-8 right-0 bg-black/60 backdrop-blur rounded-md p-2 flex flex-col gap-2 min-w-[140px]">
-                    {!(user?.id && user.id === video.userId) ? null : (
-                      <Button 
-                        variant="ghost" 
+                  {({ close }) => (
+                    <>
+                      {!(user?.id && user.id === video.userId) ? null : (
+                        <Button 
+                          variant="ghost" 
+                          className="justify-start text-white hover:bg-white/20"
+                          onClick={async () => { 
+                            try {
+                              const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${video.id}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') }})
+                              const j = await r.json()
+                              if (!r.ok) {
+                                toast.error(j.message || 'Delete failed')
+                              } else {
+                                toast.success('Video deleted')
+                                navigate(-1)
+                              }
+                            } catch { toast.error('Network error') }
+                            close()
+                          }}
+                        >
+                          Delete video
+                        </Button>
+                      )}
+                      <CopyButton
+                        variant="ghost"
+                        size="default"
                         className="justify-start text-white hover:bg-white/20"
-                        onClick={async () => { 
-                          try {
-                            const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${video.id}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') }})
-                            const j = await r.json()
-                            if (!r.ok) {
-                              toast.error(j.message || 'Delete failed')
-                            } else {
-                              toast.success('Video deleted')
-                              navigate(-1)
-                            }
-                          } catch { toast.error('Network error') }
-                          setShowMenu(false)
-                        }}
+                        text={`${window.location.origin}/video/${video.id}`}
+                        onCopied={() => { close() }}
+                        successMessage="Link copied"
                       >
-                        Delete video
-                      </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      className="justify-start text-white hover:bg-white/20"
-                      onClick={async () => { 
-                        const url = `${window.location.origin}/video/${video.id}`;
-                        try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch { /* noop */ }
-                        setShowMenu(false);
-                      }}
-                    >
-                      Share
-                    </Button>
-                  </div>
-                )}
+                        Share
+                      </CopyButton>
+                    </>
+                  )}
+                </ActionMenu>
               </div>
             </div>
             <div className="absolute left-2 bottom-24 text-white max-w-[70%]">
