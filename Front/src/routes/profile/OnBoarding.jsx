@@ -27,16 +27,27 @@ export default function App() {
     interests: [],
   });
 
+  const toBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
   const postProfileData = async (data) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Access token not found.');
 
+      const avatarStr = data.avatar instanceof File
+        ? await toBase64(data.avatar)
+        : (typeof data.avatar === 'string' ? data.avatar : null);
+
       const payload = {
         username: (data.username || '').toLowerCase().trim(),
         name: (data.name || '').trim(),
         bio: typeof data.bio === 'string' ? data.bio : '',
-        avatar: null,
+        avatar: avatarStr,
         interests: Array.isArray(data.interests) ? data.interests : []
       };
 
