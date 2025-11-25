@@ -4,6 +4,7 @@ const videoSchema = new Schema({
     id: String,
     userId: String,
     upload_id: String,
+    uploadId: String,
     asset_id: String,
     playback_id: String,
     title: String,

@@ -18,7 +18,7 @@ const createVideo = async (req, res) => {
 
     const id = crypto.randomUUID();
 
-    const video = new Video({ id, userId: req.user.id, upload_id, title: title.trim(), description: description.trim() });
+    const video = new Video({ id, userId: req.user.id, upload_id, uploadId: upload_id, title: title.trim(), description: description.trim() });
     await video.save();
 
     const json = video.toJSON();
