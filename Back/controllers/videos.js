@@ -99,13 +99,39 @@ const listMyVideos = async (req, res) => {
     const videos = await Video.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100);
     const profile = await Profile.findOne({ id: req.user.id });
     const username = profile?.username;
-    const final = videos.map(v => {
+
+    const authHeader = (MUX_TOKEN_ID && MUX_TOKEN_SECRET) ? { 'Authorization': `Basic ${Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString('base64')}` } : null;
+
+    const enriched = await Promise.all(videos.map(async v => {
         const json = v.toJSON();
         delete json._id; delete json.__v;
         json.username = username;
+        json.views = 0;
+        try {
+            if (authHeader) {
+                const dim = v.asset_id ? `asset_id:${v.asset_id}` : (v.playback_id ? `playback_id:${v.playback_id}` : null);
+                if (dim) {
+                    let count = 0;
+                    const r1 = await fetch(`https://api.mux.com/data/v1/video-views?filters[]=${encodeURIComponent(dim)}&timeframe[]=7:days&limit=1`, { headers: authHeader });
+                    const j1 = await r1.json();
+                    if (typeof j1?.total_row_count === 'number') count = j1.total_row_count;
+                    if (!count) {
+                        const r2 = await fetch(`https://api.mux.com/data/v1/metrics/views?filters[]=${encodeURIComponent(dim)}&timeframe[]=7:days`, { headers: authHeader });
+                        const j2 = await r2.json();
+                        if (j2 && Array.isArray(j2.data)) {
+                            const totals = j2.data.find(x => x.name === 'totals');
+                            const maybe = totals?.view_count;
+                            if (typeof maybe === 'number') count = maybe;
+                        }
+                    }
+                    if (count) json.views = count;
+                }
+            }
+        } catch {}
         return json;
-    });
-    return res.status(200).json(final);
+    }));
+
+    return res.status(200).json(enriched);
 };
 
 const listUserVideos = async (req, res) => {
@@ -114,13 +140,39 @@ const listUserVideos = async (req, res) => {
     const videos = await Video.find({ userId }).sort({ createdAt: -1 }).limit(100);
     const profile = await Profile.findOne({ id: userId });
     const username = profile?.username;
-    const final = videos.map(v => {
+
+    const authHeader = (MUX_TOKEN_ID && MUX_TOKEN_SECRET) ? { 'Authorization': `Basic ${Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString('base64')}` } : null;
+
+    const enriched = await Promise.all(videos.map(async v => {
         const json = v.toJSON();
         delete json._id; delete json.__v;
         json.username = username;
+        json.views = 0;
+        try {
+            if (authHeader) {
+                const dim = v.asset_id ? `asset_id:${v.asset_id}` : (v.playback_id ? `playback_id:${v.playback_id}` : null);
+                if (dim) {
+                    let count = 0;
+                    const r1 = await fetch(`https://api.mux.com/data/v1/video-views?filters[]=${encodeURIComponent(dim)}&timeframe[]=7:days&limit=1`, { headers: authHeader });
+                    const j1 = await r1.json();
+                    if (typeof j1?.total_row_count === 'number') count = j1.total_row_count;
+                    if (!count) {
+                        const r2 = await fetch(`https://api.mux.com/data/v1/metrics/views?filters[]=${encodeURIComponent(dim)}&timeframe[]=7:days`, { headers: authHeader });
+                        const j2 = await r2.json();
+                        if (j2 && Array.isArray(j2.data)) {
+                            const totals = j2.data.find(x => x.name === 'totals');
+                            const maybe = totals?.view_count;
+                            if (typeof maybe === 'number') count = maybe;
+                        }
+                    }
+                    if (count) json.views = count;
+                }
+            }
+        } catch {}
         return json;
-    });
-    return res.status(200).json(final);
+    }));
+
+    return res.status(200).json(enriched);
 };
 
 const deleteVideo = async (req, res) => {

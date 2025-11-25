@@ -163,7 +163,7 @@ export default function Profile() {
           let mapped = json.map(v => ({
             id: v.id,
             title: v.title || 'Untitled',
-            views: 0,
+            views: typeof v.views === 'number' ? v.views : 0,
             playback_id: v.playback_id,
             thumbnail: v.playback_id ? `https://image.mux.com/${v.playback_id}/thumbnail.jpg` : `/placeholder.svg?text=${encodeURIComponent(v.title || 'Video')}`
           }));
