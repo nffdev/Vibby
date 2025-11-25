@@ -32,17 +32,31 @@ export default function App() {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Access token not found.');
 
+      const payload = {
+        username: (data.username || '').toLowerCase().trim(),
+        name: (data.name || '').trim(),
+        bio: typeof data.bio === 'string' ? data.bio : '',
+        avatar: null,
+        interests: Array.isArray(data.interests) ? data.interests : []
+      };
+
       const response  = await fetch(`${BASE_API}/v${API_VERSION}/profiles/onboarding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create profile');
+        let errMsg = 'Failed to create profile';
+        try {
+          const err = await response.json();
+          if (err?.message) errMsg = err.message;
+          else if (err?.error) errMsg = err.error;
+        } catch {}
+        throw new Error(errMsg);
       }
 
       const result = await response.json();
@@ -51,7 +65,7 @@ export default function App() {
       window.location.replace('/dash/dashboard');
     } catch (error) {
       console.error('Error creating profile:', error);
-      alert('Failed to complete onboarding. Please try again.');
+      alert(error?.message || 'Failed to complete onboarding. Please try again.');
     }
   }
 
