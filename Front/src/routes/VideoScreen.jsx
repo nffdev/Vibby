@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 import MuxPlayer from '@mux/mux-player-react'
 import { BASE_API, API_VERSION } from "../config.json"
 
-function CommentsOverlay({ onClose, videoId, onAdded, onCount }) {
+function CommentsOverlay({ onClose, videoId, videoOwnerId, onAdded, onCount }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -102,7 +102,7 @@ function CommentsOverlay({ onClose, videoId, onAdded, onCount }) {
                 <a href={c.username ? `/profile?u=${c.username}` : `/profile?id=${c.userId}`} className="block text-xs text-gray-500 dark:text-gray-400 hover:underline">{c.username ? `@${c.username}` : ''}</a>
                 <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{c.text}</p>
               </div>
-              {(user && c.userId && String(user.id) === String(c.userId)) && (
+              {(user && c.userId && (String(user.id) === String(c.userId) || (videoOwnerId && String(user.id) === String(videoOwnerId)))) && (
                 <Button variant="ghost" size="sm" onClick={() => removeOne(c.id)}>
                   Delete
                 </Button>
@@ -579,6 +579,7 @@ export default function VideoScreen() {
             <CommentsOverlay 
               onClose={() => setShowComments(false)} 
               videoId={videos[currentVideoIndex]?.id}
+              videoOwnerId={videos[currentVideoIndex]?.userId}
               onAdded={() => setVideos(prev => prev.map(v => v.id === videos[currentVideoIndex]?.id ? { ...v, comments: (v.comments || 0) + 1 } : v))}
             />
           </div>
