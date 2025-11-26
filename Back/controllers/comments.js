@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const Profile = require('../models/Profile');
+const Video = require('../models/Video');
 const utils = require('../utils');
 
 const listByVideo = async (req, res) => {
@@ -74,7 +75,13 @@ const remove = async (req, res) => {
         if (!id) return res.status(400).json({ message: 'Comment id is required.' });
         const comment = await Comment.findById(id);
         if (!comment) return res.status(404).json({ message: 'Comment not found.' });
-        if (String(comment.userId) !== String(req.user.id)) return res.status(403).json({ message: 'Forbidden.' });
+        const isCommentOwner = String(comment.userId) === String(req.user.id);
+        let isVideoOwner = false;
+        if (comment.videoId) {
+            const video = await Video.findOne({ id: String(comment.videoId) });
+            if (video && String(video.userId) === String(req.user.id)) isVideoOwner = true;
+        }
+        if (!isCommentOwner && !isVideoOwner) return res.status(403).json({ message: 'Forbidden.' });
         await Comment.deleteOne({ _id: comment._id });
         return res.status(200).json({ deleted: true });
     } catch {
