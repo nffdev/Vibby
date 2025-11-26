@@ -108,6 +108,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
   const [interaction, setInteraction] = useState(video.liked ? 'like' : null)
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
+  const [isFollowingAuthor, setIsFollowingAuthor] = useState(false)
 
   const manageInteraction = useCallback((type) => {
     setInteraction((prev) => {
@@ -155,6 +156,18 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
   useEffect(() => {
     setInteraction(video.liked ? 'like' : null)
   }, [video.liked, video.id])
+
+  useEffect(() => {
+    const loadRelationship = async () => {
+      if (!user || !video.userId || user.id === video.userId) { setIsFollowingAuthor(false); return }
+      try {
+        const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/relationship/${video.userId}`, { headers: { 'Authorization': localStorage.getItem('token') } })
+        const j = await r.json()
+        if (r.ok) setIsFollowingAuthor(!!j.i_follow)
+      } catch {}
+    }
+    loadRelationship()
+  }, [user, video.userId])
 
   useEffect(() => {
     let timer
@@ -255,7 +268,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
         )}
       </AnimatePresence>
       <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
-        {!(user?.id && user.id === video.userId) && (
+        {!(user?.id && user.id === video.userId) && !isFollowingAuthor && (
           <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group">
             <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
               <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
