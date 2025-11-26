@@ -48,4 +48,23 @@ const create = async (req, res) => {
     }
 };
 
-module.exports = { listByVideo, create };
+const counts = async (req, res) => {
+    try {
+        let ids = req.query.ids;
+        if (!ids) return res.status(200).json({});
+        if (typeof ids === 'string') ids = ids.split(',').map(s => String(s).trim()).filter(Boolean);
+        if (Array.isArray(ids)) ids = ids.map(s => String(s).trim()).filter(Boolean);
+        if (!Array.isArray(ids) || ids.length === 0) return res.status(200).json({});
+        const agg = await Comment.aggregate([
+            { $match: { videoId: { $in: ids } } },
+            { $group: { _id: '$videoId', count: { $sum: 1 } } }
+        ]);
+        const out = {};
+        for (const a of agg) out[a._id] = a.count;
+        return res.status(200).json(out);
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
+};
+
+module.exports = { listByVideo, create, counts };
