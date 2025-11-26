@@ -18,6 +18,12 @@ const toggle = async (req, res) => {
             return res.status(200).json({ liked: false, likes: video.likes });
         }
         await new Like({ userId: req.user.id, videoId }).save();
+        const Dislike = require('../models/Dislike');
+        const existingDislike = await Dislike.findOne({ userId: req.user.id, videoId });
+        if (existingDislike) {
+            await Dislike.deleteOne({ _id: existingDislike._id });
+            video.dislikes = Math.max(0, (typeof video.dislikes === 'number' ? video.dislikes : 0) - 1);
+        }
         video.likes = (typeof video.likes === 'number' ? video.likes : 0) + 1;
         await video.save();
         return res.status(200).json({ liked: true, likes: video.likes });
