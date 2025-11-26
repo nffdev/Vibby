@@ -55,7 +55,7 @@ function CommentsOverlay({ onClose }) {
   )
 }
 
-function ShareOverlay({ onClose }) {
+function ShareOverlay({ onClose, url }) {
   const shareOptions = [
     'Share', 'Copy Link',
   ]
@@ -79,6 +79,17 @@ function ShareOverlay({ onClose }) {
           <button
             key={i}
             className="flex flex-col items-center gap-2"
+            onClick={async () => {
+              if (option === 'Copy Link') {
+                try {
+                  await navigator.clipboard.writeText(url)
+                  toast.success('Link copied')
+                  onClose()
+                } catch {
+                  toast.error('Copy failed')
+                }
+              }
+            }}
           >
             <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-full">
               <Share2 className="h-6 w-6" />
@@ -326,6 +337,7 @@ export default function VideoScreen() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
   const [showComments, setShowComments] = useState(false)
   const [showShare, setShowShare] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
   const containerRef = useRef(null)
   const [videos, setVideos] = useState([])
   const [error, setError] = useState('')
@@ -397,6 +409,7 @@ export default function VideoScreen() {
     if (type === 'comment') {
       setShowComments(true)
     } else if (type === 'share') {
+      setShareUrl(`${window.location.origin}/video/${videoId}`)
       setShowShare(true)
     }
     console.log(`Interaction: ${type} on video ${videoId}`)
@@ -438,7 +451,7 @@ export default function VideoScreen() {
 
         {showShare && (
           <div key="share" className="absolute inset-0 bg-black/50 z-40">
-            <ShareOverlay onClose={() => setShowShare(false)} />
+            <ShareOverlay onClose={() => setShowShare(false)} url={shareUrl} />
           </div>
         )}
       </AnimatePresence>
