@@ -14,11 +14,12 @@ import { cn } from "@/lib/utils"
 import MuxPlayer from '@mux/mux-player-react'
 import { BASE_API, API_VERSION } from "../config.json"
 
-function CommentsOverlay({ onClose, videoId, onAdded }) {
+function CommentsOverlay({ onClose, videoId, onAdded, onCount }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [text, setText] = useState('')
+  const { user } = useAuth()
 
   useEffect(() => {
     const load = async () => {
@@ -49,6 +50,23 @@ function CommentsOverlay({ onClose, videoId, onAdded }) {
         setComments(prev => [...prev, j])
         setText('')
         onAdded && onAdded()
+      }
+    } catch { toast.error('Network error') }
+  }
+
+  const removeOne = async (id) => {
+    const token = localStorage.getItem('token')
+    if (!token) { toast.error('You must be logged in'); return }
+    try {
+      const r = await fetch(`${BASE_API}/v${API_VERSION}/comments/${id}`, { method: 'DELETE', headers: { 'Authorization': token } })
+      const j = await r.json()
+      if (!r.ok) {
+        toast.error(j.message || 'Delete failed')
+      } else {
+        setComments(prev => prev.filter(c => c.id !== id))
+        const n = comments.length - 1
+        onCount && onCount(n >= 0 ? n : 0)
+        toast.success('Comment deleted')
       }
     } catch { toast.error('Network error') }
   }
@@ -84,6 +102,11 @@ function CommentsOverlay({ onClose, videoId, onAdded }) {
                 <a href={c.username ? `/profile?u=${c.username}` : `/profile?id=${c.userId}`} className="block text-xs text-gray-500 dark:text-gray-400 hover:underline">{c.username ? `@${c.username}` : ''}</a>
                 <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{c.text}</p>
               </div>
+              {(user && c.userId && String(user.id) === String(c.userId)) && (
+                <Button variant="ghost" size="sm" onClick={() => removeOne(c.id)}>
+                  Delete
+                </Button>
+              )}
             </div>
           ))
         ) : (
