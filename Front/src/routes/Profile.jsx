@@ -135,6 +135,7 @@ export default function Profile() {
   const [showFollowing, setShowFollowing] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [videos, setVideos] = useState([]);
+  const [totalLikes, setTotalLikes] = useState(0);
   const [likedVideos, setLikedVideos] = useState([]);
   const [loadingVideos, setLoadingVideos] = useState(true);
   const [loadingLiked, setLoadingLiked] = useState(false);
@@ -181,6 +182,7 @@ export default function Profile() {
             id: v.id,
             title: v.title || 'Untitled',
             views: typeof v.views === 'number' ? v.views : 0,
+            likes: typeof v.likes === 'number' ? v.likes : 0,
             playback_id: v.playback_id,
             thumbnail: v.playback_id ? `https://image.mux.com/${v.playback_id}/thumbnail.jpg` : `/placeholder.svg?text=${encodeURIComponent(v.title || 'Video')}`
           }));
@@ -205,6 +207,7 @@ export default function Profile() {
           }
 
           setVideos(mapped);
+          setTotalLikes(mapped.reduce((acc, v) => acc + (typeof v.likes === 'number' ? v.likes : 0), 0));
         }
       } catch {
         setError('Network error when loading videos.');
@@ -352,7 +355,7 @@ export default function Profile() {
             <p className="text-gray-600 text-sm">Followers</p>
           </button>
           <div className="text-center">
-            <p className="font-semibold text-xl">{profileUser.likes?.toLocaleString() || 0}</p>
+            <p className="font-semibold text-xl">{(typeof totalLikes === 'number' ? totalLikes : 0).toLocaleString()}</p>
             <p className="text-gray-600 text-sm">Likes</p>
           </div>
         </div>
