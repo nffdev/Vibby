@@ -89,7 +89,7 @@ const VideoGrid = ({ videos, onSelect, isOwner, onDeleted }) => {
   )
 }
 
-const FollowOverlay = ({ title, users, onClose }) => (
+const FollowOverlay = ({ title, users, onClose, onToggle, showFollowBackLabel }) => (
   <>
     <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
     <motion.div
@@ -116,8 +116,8 @@ const FollowOverlay = ({ title, users, onClose }) => (
               <p className="text-sm font-medium">{user.name}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{user.username}</p>
             </div>
-            <Button variant="outline" size="sm">
-              {user.isFollowing ? 'Unfollow' : 'Follow'}
+            <Button variant="outline" size="sm" onClick={() => onToggle && onToggle(user)}>
+              {user.isFollowing ? 'Unfollow' : (showFollowBackLabel ? 'Follow back' : 'Follow')}
             </Button>
           </div>
         ))}
@@ -142,6 +142,9 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [likedError, setLikedError] = useState('');
   const [profileUser, setProfileUser] = useState(null);
+  const [relationship, setRelationship] = useState({ i_follow: false, follows_me: false });
+  const [followersList, setFollowersList] = useState([]);
+  const [followingList, setFollowingList] = useState([]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -162,6 +165,19 @@ export default function Profile() {
     };
     loadUser();
   }, [user, searchParams]);
+
+  useEffect(() => {
+    const loadRelationship = async () => {
+      if (!profileUser || !user) return;
+      if (user.id === profileUser.id) { setRelationship({ i_follow: false, follows_me: false }); return; }
+      try {
+        const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/relationship/${profileUser.id}`, { headers: { 'Authorization': localStorage.getItem('token') } });
+        const j = await r.json();
+        if (r.ok) setRelationship(j);
+      } catch {}
+    };
+    loadRelationship();
+  }, [profileUser, user]);
 
   useEffect(() => {
     const loadVideos = async () => {
@@ -323,9 +339,24 @@ export default function Profile() {
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/${profileUser.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } });
+                    const j = await r.json();
+                    if (!r.ok) {
+                      toast.error(j.message || 'Action failed');
+                    } else {
+                      setRelationship(prev => ({ ...prev, i_follow: j.following }));
+                      setProfileUser(prev => ({ ...prev, followers: Math.max(0, (prev.followers || 0) + (j.following ? 1 : -1)) }));
+                    }
+                  } catch { toast.error('Network error'); }
+                }}
+              >
                 <UserPlus className="w-4 h-4 mr-2" />
-                Follow
+                {relationship.i_follow ? 'Unfollow' : (relationship.follows_me ? 'Follow back' : 'Follow')}
               </Button>
               <Button variant="outline" size="sm">
                 <MessageCircle className="w-4 h-4 mr-2" />
@@ -346,11 +377,25 @@ export default function Profile() {
         </div>
 
         <div className="flex justify-center space-x-8 py-6 border-y border-gray-200 mt-6">
-          <button onClick={() => setShowFollowing(true)} className="text-center">
+          <button onClick={async () => {
+            try {
+              const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/following/${profileUser.id}`, { headers: { 'Authorization': localStorage.getItem('token') } });
+              const j = await r.json();
+              if (r.ok) setFollowingList(Array.isArray(j) ? j : []);
+            } catch { setFollowingList([]); }
+            setShowFollowing(true);
+          }} className="text-center">
             <p className="font-semibold text-xl">{profileUser.following?.toLocaleString() || 0}</p>
             <p className="text-gray-600 text-sm">Following</p>
           </button>
-          <button onClick={() => setShowFollowers(true)} className="text-center">
+          <button onClick={async () => {
+            try {
+              const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/followers/${profileUser.id}`, { headers: { 'Authorization': localStorage.getItem('token') } });
+              const j = await r.json();
+              if (r.ok) setFollowersList(Array.isArray(j) ? j : []);
+            } catch { setFollowersList([]); }
+            setShowFollowers(true);
+          }} className="text-center">
             <p className="font-semibold text-xl">{profileUser.followers?.toLocaleString() || 0}</p>
             <p className="text-gray-600 text-sm">Followers</p>
           </button>
@@ -413,15 +458,45 @@ export default function Profile() {
         {showFollowers && (
           <FollowOverlay
             title="Followers"
-            users={mockUsers}
+            users={followersList}
             onClose={() => setShowFollowers(false)}
+            onToggle={async (u) => {
+              try {
+                const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/${u.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } });
+                const j = await r.json();
+                if (!r.ok) {
+                  toast.error(j.message || 'Action failed');
+                } else {
+                  setFollowersList(prev => prev.map(x => x.id === u.id ? { ...x, isFollowing: j.following } : x));
+                  if (user.id === profileUser.id) {
+                    setProfileUser(prev => ({ ...prev, following: Math.max(0, (prev.following || 0) + (j.following ? 1 : -1)) }));
+                  }
+                }
+              } catch { toast.error('Network error'); }
+            }}
+            showFollowBackLabel={user.id === profileUser.id}
           />
         )}
         {showFollowing && (
           <FollowOverlay
             title="Following"
-            users={mockUsers}
+            users={followingList}
             onClose={() => setShowFollowing(false)}
+            onToggle={async (u) => {
+              try {
+                const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/${u.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } });
+                const j = await r.json();
+                if (!r.ok) {
+                  toast.error(j.message || 'Action failed');
+                } else {
+                  setFollowingList(prev => prev.map(x => x.id === u.id ? { ...x, isFollowing: j.following } : x));
+                  if (user.id === profileUser.id) {
+                    setProfileUser(prev => ({ ...prev, following: Math.max(0, (prev.following || 0) + (j.following ? 1 : -1)) }));
+                  }
+                }
+              } catch { toast.error('Network error'); }
+            }}
+            showFollowBackLabel={false}
           />
         )}
       </AnimatePresence>
