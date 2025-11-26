@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, Grid, Heart, Lock, Play, User, UserPlus, Settings, Share2, MessageCircle, X } from 'lucide-react';
 import { toast } from 'sonner'
 import { useAuth } from "@/lib/hooks/useAuth";
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { BASE_API, API_VERSION } from "../config.json";
 
 const VideoGrid = ({ videos, onSelect, isOwner, onDeleted }) => {
@@ -112,9 +112,13 @@ const FollowOverlay = ({ title, users, onClose, onToggle, showFollowBackLabel })
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{user.username}</p>
+            <div className="flex-1 flex flex-col">
+              <Link to={user.username ? `/profile?u=${user.username}` : `/profile?id=${user.id}`} onClick={onClose} className="text-sm font-medium no-underline">
+                {user.name}
+              </Link>
+              <Link to={user.username ? `/profile?u=${user.username}` : `/profile?id=${user.id}`} onClick={onClose} className="text-xs text-gray-500 dark:text-gray-400 no-underline">
+                {user.username}
+              </Link>
             </div>
             <Button variant="outline" size="sm" onClick={() => onToggle && onToggle(user)}>
               {user.isFollowing ? 'Unfollow' : (showFollowBackLabel ? 'Follow back' : 'Follow')}
