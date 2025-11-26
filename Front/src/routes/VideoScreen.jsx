@@ -80,8 +80,8 @@ function CommentsOverlay({ onClose, videoId, onAdded }) {
                 <AvatarFallback>{(c.name || 'U').charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <p className="text-sm font-medium">{c.name || c.username || 'User'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{c.username ? `@${c.username}` : ''}</p>
+                <a href={c.username ? `/profile?u=${c.username}` : `/profile?id=${c.userId}`} className="text-sm font-medium hover:underline">{c.name || c.username || 'User'}</a>
+                <a href={c.username ? `/profile?u=${c.username}` : `/profile?id=${c.userId}`} className="block text-xs text-gray-500 dark:text-gray-400 hover:underline">{c.username ? `@${c.username}` : ''}</a>
                 <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{c.text}</p>
               </div>
             </div>
