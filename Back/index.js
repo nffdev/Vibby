@@ -33,6 +33,7 @@ const authRoutes = require('./routes/auth');
 const likesRoutes = require('./routes/likes');
 const followsRoutes = require('./routes/follows');
 const dislikesRoutes = require('./routes/dislikes');
+const commentsRoutes = require('./routes/comments');
 app.use(base_route + '/profiles', profileRoutes);
 app.use(base_route + '/uploads', uploadsRoutes);
 app.use(base_route + '/videos', videosRoutes);
@@ -41,6 +42,7 @@ app.use(base_route + '/auth', authRoutes);
 app.use(base_route + '/likes', likesRoutes);
 app.use(base_route + '/follows', followsRoutes);
 app.use(base_route + '/dislikes', dislikesRoutes);
+app.use(base_route + '/comments', commentsRoutes);
 
 process
     .setMaxListeners(0)
