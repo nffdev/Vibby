@@ -533,6 +533,21 @@ export default function VideoScreen() {
     }
   }, [manageScroll])
 
+  useEffect(() => {
+    const id = videos[currentVideoIndex]?.id
+    if (!id) return
+    ;(async () => {
+      try {
+        const r = await fetch(`${BASE_API}/v${API_VERSION}/comments/counts?ids=${encodeURIComponent(id)}`)
+        const j = await r.json()
+        if (r.ok && j && typeof j === 'object') {
+          const n = Number(j[id] || 0)
+          setVideos(prev => prev.map(v => v.id === id ? { ...v, comments: n } : v))
+        }
+      } catch {}
+    })()
+  }, [currentVideoIndex, videos])
+
   return (
     <div className="relative h-screen w-full max-w-7xl mx-auto bg-gradient-to-b from-cyan-900 to-sky-400 overflow-hidden">
       <AnimatePresence>
