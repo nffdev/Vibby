@@ -31,12 +31,14 @@ const videosRoutes = require('./routes/videos');
 const muxRoutes = require('./routes/mux');
 const authRoutes = require('./routes/auth');
 const likesRoutes = require('./routes/likes');
+const followsRoutes = require('./routes/follows');
 app.use(base_route + '/profiles', profileRoutes);
 app.use(base_route + '/uploads', uploadsRoutes);
 app.use(base_route + '/videos', videosRoutes);
 app.use(base_route + '/mux', muxRoutes);
 app.use(base_route + '/auth', authRoutes);
 app.use(base_route + '/likes', likesRoutes);
+app.use(base_route + '/follows', followsRoutes);
 
 process
     .setMaxListeners(0)
