@@ -151,11 +151,27 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
         }
       })()
     }
+    if (type === 'dislike') {
+      (async () => {
+        try {
+          const r = await fetch(`${BASE_API}/v${API_VERSION}/dislikes/${video.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } })
+          const j = await r.json()
+          if (!r.ok) {
+            toast.error(j.message || 'Dislike failed')
+          } else {
+            setCounts(prev => ({ ...prev, dislikes: typeof j.dislikes === 'number' ? j.dislikes : prev.dislikes }))
+            toast.success(j.disliked ? 'Added to dislikes' : 'Removed dislike')
+          }
+        } catch {
+          toast.error('Network error')
+        }
+      })()
+    }
   }, [interaction, video.id, onInteraction])
 
   useEffect(() => {
-    setInteraction(video.liked ? 'like' : null)
-  }, [video.liked, video.id])
+    setInteraction(video.liked ? 'like' : (video.disliked ? 'dislike' : null))
+  }, [video.liked, video.disliked, video.id])
 
   useEffect(() => {
     const loadRelationship = async () => {
@@ -285,12 +301,12 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
         >
           <div className={cn(
             "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
-            interaction === 'like' && "bg-blue-500"
+            (interaction === 'like' || video.liked) && "bg-blue-500"
           )}>
             <ThumbsUp 
               className={cn(
                 "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
-                interaction === 'like' && "fill-white"
+                (interaction === 'like' || video.liked) && "fill-white"
               )} 
             />
           </div>
@@ -305,12 +321,12 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
         >
           <div className={cn(
             "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
-            interaction === 'dislike' && "bg-red-500"
+            (interaction === 'dislike' || video.disliked) && "bg-red-500"
           )}>
             <ThumbsDown 
               className={cn(
                 "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
-                interaction === 'dislike' && "fill-white"
+                (interaction === 'dislike' || video.disliked) && "fill-white"
               )} 
             />
           </div>
@@ -372,9 +388,10 @@ export default function VideoScreen() {
             userId: v.userId,
             username: v.username,
             likes: typeof v.likes === 'number' ? v.likes : 0,
-            dislikes: 0,
+            dislikes: typeof v.dislikes === 'number' ? v.dislikes : 0,
             comments: 0,
-            liked: false
+            liked: false,
+            disliked: false
           }))
           setVideos(mapped)
 
@@ -386,6 +403,15 @@ export default function VideoScreen() {
               if (rLikes.ok && Array.isArray(jLikes)) {
                 const likedIds = new Set(jLikes.map(v => v.id))
                 setVideos(prev => prev.map(v => ({ ...v, liked: likedIds.has(v.id) })))
+              }
+            } catch {}
+
+            try {
+              const rDislikes = await fetch(`${BASE_API}/v${API_VERSION}/dislikes/me`, { headers: { 'Authorization': token } })
+              const jDislikes = await rDislikes.json()
+              if (rDislikes.ok && Array.isArray(jDislikes)) {
+                const dislikedIds = new Set(jDislikes.map(v => v.id))
+                setVideos(prev => prev.map(v => ({ ...v, disliked: dislikedIds.has(v.id) })))
               }
             } catch {}
           }
