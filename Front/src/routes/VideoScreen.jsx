@@ -145,6 +145,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
           } else {
             setCounts(prev => ({ ...prev, likes: typeof j.likes === 'number' ? j.likes : prev.likes }))
             toast.success(j.liked ? 'Added to liked' : 'Removed from liked')
+            onInteraction('like_state', video.id, { liked: j.liked })
           }
         } catch {
           toast.error('Network error')
@@ -161,6 +162,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
           } else {
             setCounts(prev => ({ ...prev, dislikes: typeof j.dislikes === 'number' ? j.dislikes : prev.dislikes }))
             toast.success(j.disliked ? 'Added to dislikes' : 'Removed dislike')
+            onInteraction('dislike_state', video.id, { disliked: j.disliked })
           }
         } catch {
           toast.error('Network error')
@@ -398,21 +400,18 @@ export default function VideoScreen() {
           const token = localStorage.getItem('token')
           if (token) {
             try {
-              const rLikes = await fetch(`${BASE_API}/v${API_VERSION}/likes/me`, { headers: { 'Authorization': token } })
-              const jLikes = await rLikes.json()
-              if (rLikes.ok && Array.isArray(jLikes)) {
-                const likedIds = new Set(jLikes.map(v => v.id))
-                setVideos(prev => prev.map(v => ({ ...v, liked: likedIds.has(v.id) })))
-              }
-            } catch {}
-
-            try {
-              const rDislikes = await fetch(`${BASE_API}/v${API_VERSION}/dislikes/me`, { headers: { 'Authorization': token } })
-              const jDislikes = await rDislikes.json()
-              if (rDislikes.ok && Array.isArray(jDislikes)) {
-                const dislikedIds = new Set(jDislikes.map(v => v.id))
-                setVideos(prev => prev.map(v => ({ ...v, disliked: dislikedIds.has(v.id) })))
-              }
+              const [rLikes, rDislikes] = await Promise.all([
+                fetch(`${BASE_API}/v${API_VERSION}/likes/me`, { headers: { 'Authorization': token } }),
+                fetch(`${BASE_API}/v${API_VERSION}/dislikes/me`, { headers: { 'Authorization': token } })
+              ])
+              const [jLikes, jDislikes] = await Promise.all([rLikes.json(), rDislikes.json()])
+              const likedIds = (rLikes.ok && Array.isArray(jLikes)) ? new Set(jLikes.map(v => v.id)) : new Set()
+              const dislikedIds = (rDislikes.ok && Array.isArray(jDislikes)) ? new Set(jDislikes.map(v => v.id)) : new Set()
+              setVideos(prev => prev.map(v => ({
+                ...v,
+                liked: likedIds.has(v.id) && !dislikedIds.has(v.id),
+                disliked: dislikedIds.has(v.id) && !likedIds.has(v.id)
+              })))
             } catch {}
           }
 
@@ -444,12 +443,16 @@ export default function VideoScreen() {
 
   const hasVideos = videos && videos.length > 0
 
-  const manageInteraction = useCallback((type, videoId) => {
+  const manageInteraction = useCallback((type, videoId, payload) => {
     if (type === 'comment') {
       setShowComments(true)
     } else if (type === 'share') {
       setShareUrl(`${window.location.origin}/video/${videoId}`)
       setShowShare(true)
+    } else if (type === 'like_state') {
+      setVideos(prev => prev.map(v => v.id === videoId ? { ...v, liked: !!(payload && payload.liked), disliked: (payload && payload.liked) ? false : v.disliked } : v))
+    } else if (type === 'dislike_state') {
+      setVideos(prev => prev.map(v => v.id === videoId ? { ...v, disliked: !!(payload && payload.disliked), liked: (payload && payload.disliked) ? false : v.liked } : v))
     }
     console.log(`Interaction: ${type} on video ${videoId}`)
   }, [])

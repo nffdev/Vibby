@@ -36,7 +36,9 @@ module.exports = { toggle };
 const listMe = async (req, res) => {
     try {
         const dislikes = await Dislike.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100);
-        const videoIds = dislikes.map(l => l.videoId);
+        const liked = await require('../models/Like').find({ userId: req.user.id });
+        const likedIds = new Set(liked.map(l => l.videoId));
+        const videoIds = dislikes.map(l => l.videoId).filter(id => !likedIds.has(id));
         const videos = videoIds.length ? await Video.find({ id: { $in: videoIds } }) : [];
         const byId = new Map(videos.map(v => [v.id, v]));
 
