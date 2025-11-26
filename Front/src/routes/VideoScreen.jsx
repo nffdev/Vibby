@@ -14,7 +14,45 @@ import { cn } from "@/lib/utils"
 import MuxPlayer from '@mux/mux-player-react'
 import { BASE_API, API_VERSION } from "../config.json"
 
-function CommentsOverlay({ onClose }) {
+function CommentsOverlay({ onClose, videoId, onAdded }) {
+  const [comments, setComments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [text, setText] = useState('')
+
+  useEffect(() => {
+    const load = async () => {
+      setError('')
+      setLoading(true)
+      try {
+        const r = await fetch(`${BASE_API}/v${API_VERSION}/comments/${videoId}`)
+        const j = await r.json()
+        if (!r.ok) setError(j.message || 'Unable to load comments')
+        else setComments(Array.isArray(j) ? j : [])
+      } catch { setError('Network error') }
+      finally { setLoading(false) }
+    }
+    load()
+  }, [videoId])
+
+  const send = async () => {
+    const token = localStorage.getItem('token')
+    if (!token) { toast.error('You must be logged in'); return }
+    const payload = text.trim()
+    if (!payload) return
+    try {
+      const r = await fetch(`${BASE_API}/v${API_VERSION}/comments/${videoId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ text: payload }) })
+      const j = await r.json()
+      if (!r.ok) {
+        toast.error(j.message || 'Send failed')
+      } else {
+        setComments(prev => [...prev, j])
+        setText('')
+        onAdded && onAdded()
+      }
+    } catch { toast.error('Network error') }
+  }
+
   return (
     <motion.div
       initial={{ y: "100%" }}
@@ -30,26 +68,39 @@ function CommentsOverlay({ onClose }) {
         </Button>
       </div>
       <div className="p-4 space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={`/placeholder.svg?${i}`} />
-              <AvatarFallback>U{i}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="text-sm font-medium">User{i + 1}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Contrary to popular belief, Lorem Ipsum is not simply random text
-              </p>
+        {loading ? (
+          <div className="text-sm text-gray-500">Loading comments...</div>
+        ) : error ? (
+          <div className="text-sm text-red-500">{error}</div>
+        ) : comments.length ? (
+          comments.map((c, i) => (
+            <div key={i} className="flex gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={c.avatar || '/placeholder.svg'} />
+                <AvatarFallback>{(c.name || 'U').charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{c.name || c.username || 'User'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{c.username ? `@${c.username}` : ''}</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{c.text}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div className="text-sm text-gray-500">No comment</div>
+        )}
       </div>
       <div className="sticky bottom-0 p-4 bg-white dark:bg-gray-900 border-t">
-        <Input 
-          placeholder="Add comment..." 
-          className="bg-gray-100 dark:bg-gray-800 border-0"
-        />
+        <div className="flex gap-2">
+          <Input 
+            placeholder="Add comment..." 
+            className="bg-gray-100 dark:bg-gray-800 border-0 flex-1"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') send() }}
+          />
+          <Button onClick={send}>Send</Button>
+        </div>
       </div>
     </motion.div>
   )
@@ -487,7 +538,11 @@ export default function VideoScreen() {
       <AnimatePresence>
         {showComments && (
           <div key="comments" className="absolute inset-0 bg-black/50 z-40">
-            <CommentsOverlay onClose={() => setShowComments(false)} />
+            <CommentsOverlay 
+              onClose={() => setShowComments(false)} 
+              videoId={videos[currentVideoIndex]?.id}
+              onAdded={() => setVideos(prev => prev.map(v => v.id === videos[currentVideoIndex]?.id ? { ...v, comments: (v.comments || 0) + 1 } : v))}
+            />
           </div>
         )}
 
