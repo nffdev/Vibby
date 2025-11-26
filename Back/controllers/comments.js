@@ -12,6 +12,7 @@ const listByVideo = async (req, res) => {
         const byId = new Map(profiles.map(p => [p.id, p]));
         const final = comments.map(c => {
             const json = c.toJSON(); delete json._id; delete json.__v;
+            json.id = String(c._id);
             const p = byId.get(json.userId);
             if (p) {
                 json.username = p.username;
@@ -39,7 +40,7 @@ const create = async (req, res) => {
 
         const comment = new Comment({ videoId, userId: req.user.id, text: trimmed });
         await comment.save();
-        const json = comment.toJSON(); delete json._id; delete json.__v;
+        const json = comment.toJSON(); delete json._id; delete json.__v; json.id = String(comment._id);
         const p = await Profile.findOne({ id: req.user.id });
         if (p) { json.username = p.username; json.name = p.name; json.avatar = p.avatar; }
         return res.status(201).json(json);
@@ -67,4 +68,19 @@ const counts = async (req, res) => {
     }
 };
 
-module.exports = { listByVideo, create, counts };
+const remove = async (req, res) => {
+    try {
+        const id = String(req.params.commentId || '').trim();
+        if (!id) return res.status(400).json({ message: 'Comment id is required.' });
+        const comment = await Comment.findById(id);
+        if (!comment) return res.status(404).json({ message: 'Comment not found.' });
+        if (String(comment.userId) !== String(req.user.id)) return res.status(403).json({ message: 'Forbidden.' });
+        await Comment.deleteOne({ _id: comment._id });
+        return res.status(200).json({ deleted: true });
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
+};
+
+module.exports = { listByVideo, create, counts, remove };
+
