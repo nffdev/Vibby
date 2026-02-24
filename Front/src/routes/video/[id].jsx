@@ -4,11 +4,9 @@ import { Button } from '@/components/ui/button'
 import BottomNav from '@/components/nav/BottomNav'
 import MuxPlayer from '@mux/mux-player-react'
 import { ArrowLeft } from 'lucide-react'
-import { BASE_API, API_VERSION } from '../../config.json'
-import ActionMenu from '@/components/ui/ActionMenu'
-import CopyButton from '@/components/ui/CopyButton'
-import { toast } from 'sonner'
+import VideoActionMenu from '@/components/video/VideoActionMenu'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { BASE_API, API_VERSION } from '../../config.json'
 
 export default function VideoWatch() {
   const { id } = useParams()
@@ -26,7 +24,7 @@ export default function VideoWatch() {
         const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${id}/resolve`, { headers: { 'Authorization': localStorage.getItem('token') } })
         const j = await r.json()
         if (!r.ok) {
-          setError(j.message || 'Imposssible to load the video .')
+          setError(j.message || 'Impossible to load the video.')
         } else {
           setVideo(j)
         }
@@ -38,6 +36,8 @@ export default function VideoWatch() {
     }
     load()
   }, [id])
+
+  const isOwner = user?.id && video?.userId && user.id === video.userId
 
   return (
     <div className="relative h-screen w-full max-w-7xl mx-auto bg-gradient-to-b from-cyan-900 to-sky-400 overflow-hidden">
@@ -56,48 +56,13 @@ export default function VideoWatch() {
           <div className="relative w-full h-full">
             <MuxPlayer playbackId={video.playback_id} streamType="on-demand" className="object-cover w-full h-full" autoPlay muted loop />
             <div className="absolute top-2 right-2 z-10">
-              <div className="relative">
-                <ActionMenu
-                  triggerClassName="text-white hover:bg-white/20"
-                  menuClassName="bg-black/60 backdrop-blur text-white"
-                >
-                  {({ close }) => (
-                    <>
-                      {!(user?.id && user.id === video.userId) ? null : (
-                        <Button 
-                          variant="ghost" 
-                          className="justify-start text-white hover:bg-white/20"
-                          onClick={async () => { 
-                            try {
-                              const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${video.id}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') }})
-                              const j = await r.json()
-                              if (!r.ok) {
-                                toast.error(j.message || 'Delete failed')
-                              } else {
-                                toast.success('Video deleted')
-                                navigate(-1)
-                              }
-                            } catch { toast.error('Network error') }
-                            close()
-                          }}
-                        >
-                          Delete video
-                        </Button>
-                      )}
-                      <CopyButton
-                        variant="ghost"
-                        size="default"
-                        className="justify-start text-white hover:bg-white/20"
-                        text={`${window.location.origin}/video/${video.id}`}
-                        onCopied={() => { close() }}
-                        successMessage="Link copied"
-                      >
-                        Share
-                      </CopyButton>
-                    </>
-                  )}
-                </ActionMenu>
-              </div>
+              <VideoActionMenu
+                videoId={video.id}
+                isOwner={isOwner}
+                onDeleted={() => navigate(-1)}
+                triggerClassName="text-white hover:bg-white/20"
+                menuClassName="bg-black/60 backdrop-blur text-white"
+              />
             </div>
             <div className="absolute left-2 bottom-24 text-white max-w-[70%]">
               {video.title && (<div className="text-lg font-semibold drop-shadow-md">{video.title}</div>)}
