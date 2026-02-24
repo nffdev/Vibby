@@ -1,19 +1,16 @@
 import useSWR from 'swr';
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useDropzone } from 'react-dropzone'
-import { motion } from 'framer-motion'
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Upload } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { BASE_API, API_VERSION } from "../config.json"
 import MuxUploader from "@mux/mux-uploader-react";
 
 export default function UploadPage() {
   const navigate = useNavigate()
-  const [file, setFile] = useState(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [uploadCompleted, setUploadCompleted] = useState(false)
@@ -26,16 +23,6 @@ export default function UploadPage() {
     revalidateOnFocus: false,
     revalidateOnReconnect: false
   });
-
-  const onDrop = useCallback(acceptedFiles => {
-    setFile(acceptedFiles[0])
-  }, [])
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: 'video/*',
-    multiple: false
-  })
 
   const manageSubmit = async (e) => {
     e.preventDefault()
@@ -62,7 +49,7 @@ export default function UploadPage() {
       } else {
         navigate(-1)
       }
-    } catch (err) {
+    } catch {
       setError('Impossible to upload the video at the moment.')
     } finally {
       setIsSubmitting(false)
@@ -83,30 +70,11 @@ export default function UploadPage() {
               <ArrowLeft className="h-6 w-6" />
             </Button>
             <h1 className="text-2xl font-bold text-center text-gray-900">Upload Video</h1>
-            <div className="w-6"></div> 
+            <div className="w-6"></div>
           </div>
 
           <form onSubmit={manageSubmit} className="space-y-6">
-            {/* <div
-              {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <input {...getInputProps()} />
-              {file ? (
-                <p className="text-sm text-gray-600">File selected: {file.name}</p>
-              ) : (
-                <div>
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-1 text-sm text-gray-600">
-                    Drag n drop a video here, or click to select a file
-                  </p>
-                </div>
-              )}
-            </div> */}
-
-            <MuxUploader 
+            <MuxUploader
               endpoint={data?.url || ''}
               onSuccess={() => setUploadCompleted(true)}
               onUploadError={() => setError('Failed to upload the video.')}
@@ -142,4 +110,3 @@ export default function UploadPage() {
     </div>
   )
 }
-
