@@ -7,7 +7,8 @@ import Step3Avatar from '@/components/steps/Step3Avatar';
 import Step4Bio from '@/components/steps/Step4Bio';
 import Step5Interests from '@/components/steps/Step5Interests';
 import ProgressBar from '@/components/ui/progressbar';
-import { BASE_API, API_VERSION } from "../../config.json";
+import { toBase64 } from '@/lib/utils';
+import { BASE_API, API_VERSION } from '../../config.json';
 
 const steps = [
   { component: Step1Username, title: 'Choose Username' },
@@ -27,13 +28,6 @@ export default function App() {
     interests: [],
   });
 
-  const toBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
   const postProfileData = async (data) => {
     try {
       const token = localStorage.getItem('token');
@@ -51,11 +45,11 @@ export default function App() {
         interests: Array.isArray(data.interests) ? data.interests : []
       };
 
-      const response  = await fetch(`${BASE_API}/v${API_VERSION}/profiles/onboarding`, {
+      const response = await fetch(`${BASE_API}/v${API_VERSION}/profiles/onboarding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `${token}`,
+          Authorization: token,
         },
         body: JSON.stringify(payload),
       });
@@ -70,9 +64,6 @@ export default function App() {
         throw new Error(errMsg);
       }
 
-      const result = await response.json();
-      console.log('Profile created:', result);
-
       window.location.replace('/dash/dashboard');
     } catch (error) {
       console.error('Error creating profile:', error);
@@ -85,7 +76,6 @@ export default function App() {
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      console.log('Profile created:', { ...profile, ...data });
       postProfileData({...profile, ...data});
     }
   };
