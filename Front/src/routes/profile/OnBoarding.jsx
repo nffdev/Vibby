@@ -64,7 +64,7 @@ export default function App() {
         throw new Error(errMsg);
       }
 
-      window.location.replace('/dash/dashboard');
+      window.location.replace('/videoscreen');
     } catch (error) {
       console.error('Error creating profile:', error);
       alert(error?.message || 'Failed to complete onboarding. Please try again.');
