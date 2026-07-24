@@ -2,9 +2,9 @@ import React from 'react';
 
 export default function ProgressBar({ currentStep, totalSteps }) {
   return (
-    <div className="w-full bg-white bg-opacity-30 h-2">
+    <div className="absolute inset-x-0 top-0 z-20 h-0.5 bg-white/10">
       <div
-        className="bg-white h-full transition-all duration-300 ease-out"
+        className="h-full bg-gradient-to-r from-violet-400 to-fuchsia-500 transition-all duration-500 ease-out"
         style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
       ></div>
     </div>
