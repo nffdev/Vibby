@@ -220,10 +220,11 @@ export default function VideoWatch() {
             <MuxPlayer
               playbackId={video.playback_id}
               streamType="on-demand"
-              className="h-full w-full object-cover"
+              className="vibby-player h-full w-full object-cover"
               autoPlay
               muted
               loop
+              nohotkeys
               onTimeUpdate={(e) => {
                 const { currentTime, duration } = e.target
                 setProgress(duration ? (currentTime / duration) * 100 : 0)
