@@ -28,7 +28,7 @@ export default function Login() {
 
             if (json.token) {
                 localStorage.setItem("token", json.token);
-                window.location.replace("/dash/dashboard");
+                window.location.replace("/videoscreen");
                 return;
             }
             setError(json.message || "An error occurred.");

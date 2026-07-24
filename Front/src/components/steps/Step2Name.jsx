@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 
 export default function Step2Name({ onNext, data }) {
   const [name, setName] = useState(data.name);
@@ -10,27 +9,21 @@ export default function Step2Name({ onNext, data }) {
   };
 
   return (
-    <motion.form
-      onSubmit={manageSubmit}
-      className="bg-white rounded-lg p-6 shadow-xl"
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <form onSubmit={manageSubmit} className="space-y-4">
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Enter your full name"
-        className="w-full p-3 border border-gray-300 rounded-md mb-4"
+        placeholder="Ton nom complet"
+        className="h-14 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white placeholder:text-white/30 backdrop-blur-md transition-colors focus:border-fuchsia-400/50 focus:outline-none"
         required
       />
       <button
         type="submit"
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 rounded-md font-semibold hover:opacity-90 transition-opacity"
+        className="w-full rounded-2xl bg-white py-4 text-sm font-semibold text-black transition-transform hover:scale-[1.02] active:scale-95"
       >
-        Next
+        Continuer
       </button>
-    </motion.form>
+    </form>
   );
 }

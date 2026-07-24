@@ -17,10 +17,10 @@ export function AuthWrapper({ children }) {
 	const location = useLocation();
 	
 	const auth = localStorage.getItem('token');
-	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/dash/dashboard');
+	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/videoscreen');
 
 	useEffect(() => {
-		if (!['/dash', '/profile', '/upload', '/videoscreen'].some(path => window.location.pathname.startsWith(path)) || !auth || (user && user.id)) return;
+		if (!['/profile', '/upload', '/videoscreen'].some(path => window.location.pathname.startsWith(path)) || !auth || (user && user.id)) return;
 		setIsLoading(true);
 
 		async function getUser() {
@@ -34,7 +34,7 @@ export function AuthWrapper({ children }) {
 			}
 
 			if (window.location.pathname.startsWith('/profile/onboarding') && data?.id) {
-				navigate('/dash/dashboard');
+				navigate('/videoscreen');
 			}
 
 			if (data?.id) {
@@ -47,7 +47,7 @@ export function AuthWrapper({ children }) {
 	}, [location]);
 
 	if (onboarding) return <>{children}</>;
-	if (!['/dash', '/profile', '/upload', '/videoscreen'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
+	if (!['/profile', '/upload', '/videoscreen'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
 	if (user && user.id) return <>{children}</>;
 	if (!auth) return <Login />;
 

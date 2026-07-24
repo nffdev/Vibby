@@ -7,15 +7,16 @@ import Step3Avatar from '@/components/steps/Step3Avatar';
 import Step4Bio from '@/components/steps/Step4Bio';
 import Step5Interests from '@/components/steps/Step5Interests';
 import ProgressBar from '@/components/ui/progressbar';
+import { AuthBackdrop } from '@/components/auth/VideoWall';
 import { toBase64 } from '@/lib/utils';
 import { BASE_API, API_VERSION } from '../../config.json';
 
 const steps = [
-  { component: Step1Username, title: 'Choose Username' },
-  { component: Step2Name, title: 'Enter FullName' },
-  { component: Step3Avatar, title: 'Upload Avatar' },
-  { component: Step4Bio, title: 'Write Bio' },
-  { component: Step5Interests, title: 'Select Interests' },
+  { component: Step1Username, eyebrow: 'Étape 1 sur 5', title: 'Choisis ton', accent: 'pseudo.' },
+  { component: Step2Name, eyebrow: 'Étape 2 sur 5', title: 'Ton', accent: 'nom.' },
+  { component: Step3Avatar, eyebrow: 'Étape 3 sur 5', title: 'Une', accent: 'photo.' },
+  { component: Step4Bio, eyebrow: 'Étape 4 sur 5', title: 'Deux mots sur', accent: 'toi.' },
+  { component: Step5Interests, eyebrow: 'Étape 5 sur 5', title: 'Tes', accent: 'vibes.' },
 ];
 
 export default function App() {
@@ -64,7 +65,7 @@ export default function App() {
         throw new Error(errMsg);
       }
 
-      window.location.replace('/dash/dashboard');
+      window.location.replace('/videoscreen');
     } catch (error) {
       console.error('Error creating profile:', error);
       alert(error?.message || 'Failed to complete onboarding. Please try again.');
@@ -86,37 +87,48 @@ export default function App() {
     }
   };
 
+  const step = steps[currentStep];
+
   return (
-    <div className="min-h-screen bg-gradient-to-r from-purple-400 to-pink-500 flex flex-col">
+    <div className="vibby-landing relative isolate flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#07070a] px-4 py-12 text-white antialiased selection:bg-fuchsia-500/30">
+      <AuthBackdrop />
       <ProgressBar currentStep={currentStep} totalSteps={steps.length} />
-      <div className="flex-1 flex flex-col justify-center items-center p-4">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ x: 300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-            className="w-full max-w-md"
-          >
-            <h1 className="text-3xl font-bold text-white mb-6 text-center">
-              {steps[currentStep].title}
-            </h1>
-            {React.createElement(steps[currentStep].component, {
-              onNext: manageNext,
-              data: profile,
-            })}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+
       {currentStep > 0 && (
         <button
           onClick={manageBack}
-          className="absolute top-4 left-4 text-white text-xl"
+          aria-label="Retour"
+          className="absolute left-6 top-6 z-20 rounded-full border border-white/10 bg-black/40 p-2.5 text-white backdrop-blur-md transition-colors hover:border-white/25 hover:bg-black/60"
         >
-            <ArrowLeft className="h-4 w-4 sm:h-6 sm:w-6" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
       )}
+
+      <div className="relative z-10 w-full max-w-[26rem]">
+        <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl sm:p-10">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ x: 40, opacity: 0, filter: 'blur(8px)' }}
+              animate={{ x: 0, opacity: 1, filter: 'blur(0px)' }}
+              exit={{ x: -40, opacity: 0, filter: 'blur(8px)' }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <span className="text-[10px] uppercase tracking-[0.3em] text-white/40">{step.eyebrow}</span>
+              <h1 className="mb-8 mt-4 text-[2.25rem] font-extrabold leading-[0.95] tracking-tight">
+                {step.title}{' '}
+                <span className="bg-gradient-to-r from-violet-300 via-fuchsia-400 to-orange-300 bg-clip-text text-transparent">
+                  {step.accent}
+                </span>
+              </h1>
+              {React.createElement(step.component, {
+                onNext: manageNext,
+                data: profile,
+              })}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 }
