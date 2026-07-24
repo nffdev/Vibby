@@ -6,10 +6,11 @@ import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, Search } from 'lucide-react'
 import VideoActionMenu from '@/components/video/VideoActionMenu'
+import ActionButton from '@/components/video/ActionButton'
 import CommentsOverlay from '@/components/video/CommentsOverlay'
 import ShareOverlay from '@/components/video/ShareOverlay'
 import { toast } from 'sonner'
-import { cn, resolvePlaybackIds } from "@/lib/utils"
+import { resolvePlaybackIds } from "@/lib/utils"
 import { BASE_API, API_VERSION } from "../config.json"
 import MuxPlayer from '@mux/mux-player-react'
 
@@ -20,6 +21,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
   const [isFollowingAuthor, setIsFollowingAuthor] = useState(false)
+  const [progress, setProgress] = useState(0)
 
   const manageInteraction = useCallback((type) => {
     setInteraction((prev) => {
@@ -104,35 +106,47 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
   const isOwner = user?.id && user.id === video.userId
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative mx-auto h-full w-full overflow-hidden bg-black md:aspect-[9/16] md:h-full md:w-auto md:rounded-3xl md:border md:border-white/10">
       {video.playback_id ? (
         <MuxPlayer
           playbackId={video.playback_id}
           streamType="on-demand"
-          className="object-cover w-full h-full"
+          className="h-full w-full object-cover"
           autoPlay
           muted
           loop
+          onTimeUpdate={(e) => {
+            const { currentTime, duration } = e.target
+            setProgress(duration ? (currentTime / duration) * 100 : 0)
+          }}
         />
       ) : (
         <img
           src={"/placeholder.svg?height=1920&width=1080"}
           alt={video.description}
-          className="object-cover w-full h-full"
+          className="h-full w-full object-cover"
         />
       )}
 
-      <div className="absolute left-2 sm:left-4 bottom-28 sm:bottom-32 text-white max-w-[70%]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/80 via-black/30 to-transparent"
+      />
+
+      <div className="absolute left-3 sm:left-5 bottom-6 sm:bottom-8 z-10 max-w-[70%] text-white">
+        {(video.username || video.userId) && (
+          <button
+            onClick={() => navigate(video.username ? `/profile?u=${video.username}` : `/profile?id=${video.userId}`)}
+            className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/70 drop-shadow-md transition-colors hover:text-white sm:text-sm"
+          >
+            {video.username ? `@${video.username}` : video.userId}
+          </button>
+        )}
         {video.title && (
-          <div className="text-lg sm:text-xl font-semibold drop-shadow-md">{video.title}</div>
+          <div className="text-lg font-semibold leading-tight drop-shadow-md sm:text-xl">{video.title}</div>
         )}
         {video.description && (
-          <div className="text-sm sm:text-base opacity-90 drop-shadow-md">{video.description}</div>
-        )}
-        {(video.username || video.userId) && (
-          <button onClick={() => navigate(video.username ? `/profile?u=${video.username}` : `/profile?id=${video.userId}`)} className="text-xs sm:text-sm opacity-90 drop-shadow-md underline">
-            by {video.username ? `@${video.username}` : video.userId}
-          </button>
+          <div className="mt-1 text-sm leading-relaxed text-white/70 drop-shadow-md sm:text-base">{video.description}</div>
         )}
       </div>
 
@@ -149,95 +163,65 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
       <AnimatePresence>
         {showThumb && (
           <motion.div
-            initial={{ scale: 0, opacity: 0 }}
+            initial={{ scale: 0.4, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            exit={{ scale: 1.4, opacity: 0 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none"
           >
             {interaction === 'like' ? (
-              <ThumbsUp className="w-32 h-32 text-blue-500" />
+              <ThumbsUp className="h-28 w-28 fill-fuchsia-500 text-fuchsia-500 drop-shadow-[0_0_35px_rgba(236,72,153,0.55)]" />
             ) : (
-              <ThumbsDown className="w-32 h-32 text-red-500" />
+              <ThumbsDown className="h-28 w-28 fill-red-500 text-red-500 drop-shadow-[0_0_35px_rgba(239,68,68,0.5)]" />
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
+      <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 z-10 flex flex-col items-center gap-4 sm:gap-5">
         {!isOwner && !isFollowingAuthor && (
-          <Button variant="ghost" size="icon" className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group">
-            <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
-              <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-            </div>
-            <span className="text-xs sm:text-sm md:text-base mt-2">Follow</span>
-          </Button>
+          <ActionButton icon={UserPlus} label="Suivre" />
         )}
 
-        <Button
-          variant="ghost"
-          size="icon"
+        <ActionButton
+          icon={ThumbsUp}
+          label={counts.likes.toLocaleString()}
           onClick={() => manageInteraction('like')}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
-        >
-          <div className={cn(
-            "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
-            (interaction === 'like' || video.liked) && "bg-blue-500"
-          )}>
-            <ThumbsUp
-              className={cn(
-                "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
-                (interaction === 'like' || video.liked) && "fill-white"
-              )}
-            />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">{counts.likes.toLocaleString()}</span>
-        </Button>
+          active={interaction === 'like' || video.liked}
+          activeClassName="border-transparent bg-gradient-to-br from-violet-500 to-fuchsia-500"
+          fill={interaction === 'like' || video.liked}
+        />
 
-        <Button
-          variant="ghost"
-          size="icon"
+        <ActionButton
+          icon={ThumbsDown}
+          label={counts.dislikes.toLocaleString()}
           onClick={() => manageInteraction('dislike')}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
-        >
-          <div className={cn(
-            "bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors",
-            (interaction === 'dislike' || video.disliked) && "bg-red-500"
-          )}>
-            <ThumbsDown
-              className={cn(
-                "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 transition-all",
-                (interaction === 'dislike' || video.disliked) && "fill-white"
-              )}
-            />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">{counts.dislikes.toLocaleString()}</span>
-        </Button>
+          active={interaction === 'dislike' || video.disliked}
+          activeClassName="border-transparent bg-red-500"
+          fill={interaction === 'dislike' || video.disliked}
+        />
 
-        <Button
-          variant="ghost"
-          size="icon"
+        <ActionButton
+          icon={MessageCircle}
+          label={video.comments}
           onClick={() => onInteraction('comment', video.id)}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
-        >
-          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
-            <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">{video.comments}</span>
-        </Button>
+        />
 
-        <Button
-          variant="ghost"
-          size="icon"
+        <ActionButton
+          icon={Share2}
+          label="Partager"
           onClick={() => onInteraction('share', video.id)}
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
-        >
-          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
-            <Share2 className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-          </div>
-          <span className="text-xs sm:text-sm md:text-base mt-2">Share</span>
-        </Button>
+        />
       </div>
+
+      {video.playback_id && (
+        <div className="absolute inset-x-0 bottom-0 z-10 h-0.5 bg-white/15">
+          <div
+            className="h-full bg-gradient-to-r from-violet-400 to-fuchsia-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -318,7 +302,6 @@ export default function VideoScreen() {
     } else if (type === 'dislike_state') {
       setVideos(prev => prev.map(v => v.id === videoId ? { ...v, disliked: !!(payload && payload.disliked), liked: (payload && payload.disliked) ? false : v.liked } : v))
     }
-    console.log(`Interaction: ${type} on video ${videoId}`)
   }, [])
 
   const manageScroll = useCallback(() => {
@@ -362,56 +345,79 @@ export default function VideoScreen() {
   }, [currentVideoIndex, videos])
 
   return (
-    <div className="relative h-screen w-full max-w-7xl mx-auto bg-gradient-to-b from-cyan-900 to-sky-400 overflow-hidden">
+    <div className="vibby-landing relative h-screen w-full overflow-hidden bg-[#07070a] text-white antialiased selection:bg-fuchsia-500/30">
       <AnimatePresence>
         {showComments && (
-          <div key="comments" className="absolute inset-0 bg-black/50 z-40">
-            <CommentsOverlay
-              onClose={() => setShowComments(false)}
-              videoId={videos[currentVideoIndex]?.id}
-              videoOwnerId={videos[currentVideoIndex]?.userId}
-              onAdded={() => setVideos(prev => prev.map(v => v.id === videos[currentVideoIndex]?.id ? { ...v, comments: (v.comments || 0) + 1 } : v))}
-            />
-          </div>
+          <motion.div
+            key="comments"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowComments(false)}
+            className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm md:flex md:items-center md:justify-center"
+          >
+            <div onClick={(e) => e.stopPropagation()} className="contents">
+              <CommentsOverlay
+                onClose={() => setShowComments(false)}
+                videoId={videos[currentVideoIndex]?.id}
+                videoOwnerId={videos[currentVideoIndex]?.userId}
+                onAdded={() => setVideos(prev => prev.map(v => v.id === videos[currentVideoIndex]?.id ? { ...v, comments: (v.comments || 0) + 1 } : v))}
+              />
+            </div>
+          </motion.div>
         )}
 
         {showShare && (
-          <div key="share" className="absolute inset-0 bg-black/50 z-40">
-            <ShareOverlay onClose={() => setShowShare(false)} url={shareUrl} />
-          </div>
+          <motion.div
+            key="share"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowShare(false)}
+            className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          >
+            <div onClick={(e) => e.stopPropagation()} className="contents">
+              <ShareOverlay onClose={() => setShowShare(false)} url={shareUrl} />
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-black/70 to-transparent"
+      />
+
+      <div className="absolute top-3 sm:top-5 left-3 sm:left-5 z-20">
         <Button
           variant="ghost"
-          size="icon"
+          size={null}
           onClick={() => navigate(-1)}
-          className="text-white hover:bg-white/20"
+          aria-label="Retour"
+          className="rounded-full border border-white/10 bg-black/40 p-2.5 text-white backdrop-blur-md transition-colors hover:border-white/25 hover:bg-black/60 hover:text-white"
         >
-          <ArrowLeft className="h-4 w-4 sm:h-6 sm:w-6" />
+          <ArrowLeft className="h-5 w-5" />
         </Button>
       </div>
 
-      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
+      <div className="absolute top-3 sm:top-5 right-3 sm:right-5 z-20">
         <Button
           variant="ghost"
-          size="icon"
-          className="flex flex-col items-center p-0 h-auto text-white hover:bg-transparent group"
+          size={null}
+          aria-label="Rechercher"
+          className="rounded-full border border-white/10 bg-black/40 p-2.5 text-white backdrop-blur-md transition-colors hover:border-white/25 hover:bg-black/60 hover:text-white"
         >
-          <div className="bg-gray-800/40 p-2 sm:p-3 md:p-4 rounded-full group-hover:bg-gray-700/60 transition-colors">
-            <Search className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
-          </div>
+          <Search className="h-5 w-5" />
         </Button>
       </div>
 
       <div
         ref={containerRef}
-        className="h-full overflow-y-scroll snap-y snap-mandatory"
+        className="vibby-scroller h-[calc(100%-4.5rem)] snap-y snap-mandatory overflow-y-scroll"
         style={{ scrollSnapType: 'y mandatory' }}
       >
         {hasVideos ? videos.map((video, index) => (
-          <div key={video.id || index} className="h-full snap-start">
+          <div key={video.id || index} className="flex h-full snap-start items-center justify-center md:py-4">
             <VideoPlayer
               video={video}
               onInteraction={manageInteraction}
@@ -419,21 +425,29 @@ export default function VideoScreen() {
             />
           </div>
         )) : (
-          <div className="h-full grid place-items-center">
-            <div className="text-white text-center">
-              {error ? error : 'No video at the moment.'}
+          <div className="grid h-full place-items-center px-6">
+            <div className="max-w-sm text-center">
+              <p className="text-2xl font-extrabold tracking-tight">
+                {error ? 'Ça coince.' : 'Rien à voir.'}
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-white/45">
+                {error || "Aucune vidéo pour l'instant. Sois le premier à poster."}
+              </p>
+              {!error && (
+                <Button
+                  variant="ghost"
+                  size={null}
+                  onClick={() => navigate('/upload')}
+                  className="mt-8 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-black transition-transform hover:bg-white hover:scale-[1.03] active:scale-95"
+                >
+                  Poster une vidéo
+                </Button>
+              )}
             </div>
           </div>
         )}
       </div>
 
-      <div className="absolute bottom-20 sm:bottom-24 left-2 sm:left-4 right-2 sm:right-4">
-        <div className="w-full bg-gray-200/30 rounded-full h-0.5 sm:h-1">
-          <div
-            className="bg-white h-0.5 sm:h-1 rounded-full transition-all duration-300"
-          ></div>
-        </div>
-      </div>
       <BottomNav />
     </div>
   )

@@ -64,3 +64,12 @@ body:has(.vibby-landing) {
   color: white;
   overflow-x: hidden;
 }
+
+.vibby-scroller {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.vibby-scroller::-webkit-scrollbar {
+  display: none;
+}
