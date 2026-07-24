@@ -73,3 +73,33 @@ body:has(.vibby-landing) {
 .vibby-scroller::-webkit-scrollbar {
   display: none;
 }
+
+.vibby-uploader mux-uploader {
+  --progress-bar-fill-color: #d946ef;
+  --progress-radial-fill-color: #d946ef;
+  --overlay-background-color: rgba(7, 7, 10, 0.8);
+  font-family: "Poppins", sans-serif;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.vibby-uploader mux-uploader::part(heading),
+.vibby-uploader mux-uploader::part(separator),
+.vibby-uploader mux-uploader::part(status) {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.8125rem;
+}
+
+.vibby-uploader mux-uploader::part(file-select-button) {
+  background: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.625rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.vibby-uploader mux-uploader::part(pause) {
+  color: rgba(255, 255, 255, 0.6);
+}
