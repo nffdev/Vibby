@@ -369,20 +369,38 @@ export default function VideoScreen() {
     <div className="vibby-landing relative h-screen w-full overflow-hidden bg-[#07070a] text-white antialiased selection:bg-fuchsia-500/30">
       <AnimatePresence>
         {showComments && (
-          <div key="comments" className="absolute inset-0 bg-black/50 z-40">
-            <CommentsOverlay
-              onClose={() => setShowComments(false)}
-              videoId={videos[currentVideoIndex]?.id}
-              videoOwnerId={videos[currentVideoIndex]?.userId}
-              onAdded={() => setVideos(prev => prev.map(v => v.id === videos[currentVideoIndex]?.id ? { ...v, comments: (v.comments || 0) + 1 } : v))}
-            />
-          </div>
+          <motion.div
+            key="comments"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowComments(false)}
+            className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm md:flex md:items-center md:justify-center"
+          >
+            <div onClick={(e) => e.stopPropagation()} className="contents">
+              <CommentsOverlay
+                onClose={() => setShowComments(false)}
+                videoId={videos[currentVideoIndex]?.id}
+                videoOwnerId={videos[currentVideoIndex]?.userId}
+                onAdded={() => setVideos(prev => prev.map(v => v.id === videos[currentVideoIndex]?.id ? { ...v, comments: (v.comments || 0) + 1 } : v))}
+              />
+            </div>
+          </motion.div>
         )}
 
         {showShare && (
-          <div key="share" className="absolute inset-0 bg-black/50 z-40">
-            <ShareOverlay onClose={() => setShowShare(false)} url={shareUrl} />
-          </div>
+          <motion.div
+            key="share"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowShare(false)}
+            className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          >
+            <div onClick={(e) => e.stopPropagation()} className="contents">
+              <ShareOverlay onClose={() => setShowShare(false)} url={shareUrl} />
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
