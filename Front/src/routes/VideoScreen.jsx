@@ -154,7 +154,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
         className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/80 via-black/30 to-transparent"
       />
 
-      <div className="absolute left-2 sm:left-4 bottom-28 sm:bottom-32 z-10 max-w-[70%] text-white">
+      <div className="absolute left-3 sm:left-5 bottom-6 sm:bottom-8 z-10 max-w-[70%] text-white">
         {(video.username || video.userId) && (
           <button
             onClick={() => navigate(video.username ? `/profile?u=${video.username}` : `/profile?id=${video.userId}`)}
