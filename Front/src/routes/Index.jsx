@@ -143,6 +143,7 @@ function Manifesto() {
 
 export default function Home() {
     const navigate = useNavigate();
+    const isAuthenticated = !!localStorage.getItem("token");
     const heroRef = useRef(null);
     const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
     const wallY = useTransform(scrollYProgress, [0, 1], [0, -140]);
@@ -165,22 +166,35 @@ export default function Home() {
                         <span className="text-sm font-semibold tracking-[0.28em] uppercase">Vibby</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size={null}
-                            onClick={() => navigate("/auth/login")}
-                            className="rounded-full px-4 py-2 text-sm font-normal text-white/60 transition hover:bg-transparent hover:text-white"
-                        >
-                            Se connecter
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size={null}
-                            onClick={() => navigate("/auth/register")}
-                            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-normal backdrop-blur-md transition hover:bg-white/10 hover:text-inherit"
-                        >
-                            Créer un compte
-                        </Button>
+                        {isAuthenticated ? (
+                            <Button
+                                variant="ghost"
+                                size={null}
+                                onClick={() => navigate("/videoscreen")}
+                                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-normal backdrop-blur-md transition hover:bg-white/10 hover:text-inherit"
+                            >
+                                Retour au feed
+                            </Button>
+                        ) : (
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size={null}
+                                    onClick={() => navigate("/auth/login")}
+                                    className="rounded-full px-4 py-2 text-sm font-normal text-white/60 transition hover:bg-transparent hover:text-white"
+                                >
+                                    Se connecter
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size={null}
+                                    onClick={() => navigate("/auth/register")}
+                                    className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-normal backdrop-blur-md transition hover:bg-white/10 hover:text-inherit"
+                                >
+                                    Créer un compte
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
@@ -241,7 +255,7 @@ export default function Home() {
                             onClick={() => navigate("/videoscreen")}
                             className="group relative overflow-hidden rounded-full bg-white px-8 py-4 text-sm font-semibold text-black transition-transform hover:bg-white hover:scale-[1.03] active:scale-95"
                         >
-                            <span className="relative z-10">Entrer dans le flux</span>
+                            <span className="relative z-10">Entrer dans le feed</span>
                             <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-violet-400 to-fuchsia-400 transition-transform duration-500 group-hover:translate-x-0" />
                         </Button>
                         <Button
