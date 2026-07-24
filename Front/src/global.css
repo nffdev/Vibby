@@ -74,6 +74,15 @@ body:has(.vibby-landing) {
   display: none;
 }
 
+.vibby-player {
+  --controls: none;
+  --media-object-fit: cover;
+}
+
+.vibby-player::part(gesture-layer) {
+  display: none;
+}
+
 .vibby-uploader mux-uploader {
   --progress-bar-fill-color: #d946ef;
   --progress-radial-fill-color: #d946ef;
