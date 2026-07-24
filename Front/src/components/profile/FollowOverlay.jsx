@@ -22,15 +22,16 @@ export default function FollowOverlay({ title, users, onClose, onToggle, showFol
         className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
+      <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-4">
       <motion.div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
+        initial={{ y: "100%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", damping: 26, stiffness: 280 }}
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col rounded-t-3xl border-t border-white/10 bg-[#0b0b10]/95 text-white backdrop-blur-2xl md:inset-x-auto md:left-1/2 md:max-w-lg md:-translate-x-1/2 md:rounded-3xl"
+        className="pointer-events-auto flex max-h-[80vh] w-full flex-col rounded-t-3xl border-t border-white/10 bg-[#0b0b10]/95 text-white backdrop-blur-2xl md:max-w-md md:rounded-3xl md:border"
       >
         <div className="shrink-0 px-5 pb-4 pt-3">
           <div aria-hidden className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/15" />
@@ -89,6 +90,7 @@ export default function FollowOverlay({ title, users, onClose, onToggle, showFol
           )}
         </div>
       </motion.div>
+      </div>
     </>
   )
 }
