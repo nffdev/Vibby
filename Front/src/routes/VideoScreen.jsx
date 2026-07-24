@@ -42,6 +42,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
   const [isFollowingAuthor, setIsFollowingAuthor] = useState(false)
+  const [progress, setProgress] = useState(0)
 
   const manageInteraction = useCallback((type) => {
     setInteraction((prev) => {
@@ -135,6 +136,10 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
           autoPlay
           muted
           loop
+          onTimeUpdate={(e) => {
+            const { currentTime, duration } = e.target
+            setProgress(duration ? (currentTime / duration) * 100 : 0)
+          }}
         />
       ) : (
         <img
@@ -229,6 +234,15 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
           onClick={() => onInteraction('share', video.id)}
         />
       </div>
+
+      {video.playback_id && (
+        <div className="absolute inset-x-0 bottom-0 z-10 h-0.5 bg-white/15">
+          <div
+            className="h-full bg-gradient-to-r from-violet-400 to-fuchsia-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -437,16 +451,6 @@ export default function VideoScreen() {
         )}
       </div>
 
-      {hasVideos && (
-        <div className="absolute bottom-[4.75rem] left-3 right-3 z-10 mx-auto max-w-md sm:left-5 sm:right-5">
-          <div className="h-0.5 w-full overflow-hidden rounded-full bg-white/15">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-500 transition-all duration-300"
-              style={{ width: `${((currentVideoIndex + 1) / videos.length) * 100}%` }}
-            />
-          </div>
-        </div>
-      )}
       <BottomNav />
     </div>
   )
