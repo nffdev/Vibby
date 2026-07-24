@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { ImagePlus } from 'lucide-react';
 
 export default function Step2Avatar({ onNext, data }) {
   const [avatar, setAvatar] = useState(data.avatar);
@@ -19,38 +19,30 @@ export default function Step2Avatar({ onNext, data }) {
   };
 
   return (
-    <motion.form
-      onSubmit={manageSubmit}
-      className="bg-white rounded-lg p-6 shadow-xl"
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="mb-4">
+    <form onSubmit={manageSubmit} className="space-y-4">
+      <label className="group flex cursor-pointer flex-col items-center gap-4 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] py-8 transition-colors hover:border-white/25">
         {previewUrl ? (
           <img
             src={previewUrl}
-            alt="Avatar preview"
-            className="w-32 h-32 rounded-full mx-auto object-cover"
+            alt="Aperçu de l'avatar"
+            className="h-28 w-28 rounded-full border border-white/10 object-cover"
           />
         ) : (
-          <div className="w-32 h-32 rounded-full bg-gray-200 mx-auto flex items-center justify-center">
-            <span className="text-gray-500">No image</span>
-          </div>
+          <span className="flex h-28 w-28 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/30 transition-colors group-hover:text-white/50">
+            <ImagePlus className="h-8 w-8" />
+          </span>
         )}
-      </div>
-      <input
-        type="file"
-        onChange={manageFileChange}
-        accept="image/*"
-        className="w-full p-3 border border-gray-300 rounded-md mb-4"
-      />
+        <span className="text-xs uppercase tracking-[0.2em] text-white/40">
+          {previewUrl ? 'Changer la photo' : 'Choisir une photo'}
+        </span>
+        <input type="file" onChange={manageFileChange} accept="image/*" className="hidden" />
+      </label>
       <button
         type="submit"
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 rounded-md font-semibold hover:opacity-90 transition-opacity"
+        className="w-full rounded-2xl bg-white py-4 text-sm font-semibold text-black transition-transform hover:scale-[1.02] active:scale-95"
       >
-        Next
+        Continuer
       </button>
-    </motion.form>
+    </form>
   );
 }

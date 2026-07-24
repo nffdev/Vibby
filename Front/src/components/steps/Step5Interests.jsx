@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const interests = [
   'Music', 'Dance', 'Comedy', 'Food', 'Travel', 'Fashion', 'Sports', 'Gaming',
@@ -23,24 +23,19 @@ export default function Step4Interests({ onNext, data }) {
   };
 
   return (
-    <motion.form
-      onSubmit={manageSubmit}
-      className="bg-white rounded-lg p-6 shadow-xl"
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="mb-4 flex flex-wrap gap-2">
+    <form onSubmit={manageSubmit} className="space-y-5">
+      <div className="flex flex-wrap gap-2">
         {interests.map((interest) => (
           <button
             key={interest}
             type="button"
             onClick={() => toggleInterest(interest)}
-            className={`px-3 py-1 rounded-full text-sm font-semibold ${
+            className={cn(
+              'rounded-full border px-3.5 py-1.5 text-sm transition-colors',
               selectedInterests.includes(interest)
-                ? 'bg-purple-500 text-white'
-                : 'bg-gray-200 text-gray-700'
-            }`}
+                ? 'border-transparent bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white'
+                : 'border-white/10 bg-white/[0.04] text-white/60 hover:border-white/25 hover:text-white'
+            )}
           >
             {interest}
           </button>
@@ -48,10 +43,10 @@ export default function Step4Interests({ onNext, data }) {
       </div>
       <button
         type="submit"
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 rounded-md font-semibold hover:opacity-90 transition-opacity"
+        className="w-full rounded-2xl bg-white py-4 text-sm font-semibold text-black transition-transform hover:scale-[1.02] active:scale-95"
       >
-        Finish
+        Terminer
       </button>
-    </motion.form>
+    </form>
   );
 }
