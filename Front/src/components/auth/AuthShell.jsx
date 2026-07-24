@@ -16,9 +16,10 @@ export default function AuthShell({ eyebrow, title, accent, error, children, foo
             </Link>
 
             <motion.div
-                initial={{ opacity: 0, y: 24, filter: "blur(12px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: EASE }}
+                style={{ willChange: "transform, opacity" }}
                 className="relative z-10 w-full max-w-[26rem]"
             >
                 <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 backdrop-blur-2xl sm:p-10">
