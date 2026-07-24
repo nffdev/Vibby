@@ -3,26 +3,27 @@ import VideoActionMenu from './VideoActionMenu'
 
 function VideoCard({ video, onSelect, isOwner, onDeleted }) {
   return (
-    <div className="relative rounded-lg overflow-hidden shadow-md">
-      <button className="absolute inset-0" onClick={() => onSelect(video.id)} aria-label="open" />
-      <img src={video.thumbnail} alt="" className="w-full h-40 object-cover" />
-      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
-        <Play className="w-12 h-12 text-white" />
+    <div className="group relative aspect-[9/14] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+      <button className="absolute inset-0 z-[1]" onClick={() => onSelect(video.id)} aria-label="open" />
+      <img src={video.thumbnail} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+        <Play className="h-10 w-10 fill-white text-white" />
       </div>
-      <div className="absolute top-2 right-2 z-10">
+      <div className="absolute right-2 top-2 z-10">
         <VideoActionMenu
           videoId={video.id}
           isOwner={isOwner}
           onDeleted={onDeleted}
-          triggerClassName="bg-white/40 hover:bg-white/60"
-          menuClassName="bg-black/70 text-white"
+          triggerClassName="text-white bg-black/40 backdrop-blur-md hover:bg-black/60"
+          menuClassName="bg-black/70 backdrop-blur text-white"
         />
       </div>
-      <div className="p-2 bg-white">
-        <h3 className="font-semibold text-sm truncate">{video.title}</h3>
-        <div className="flex items-center text-xs text-gray-500 mt-1">
-          <Play className="w-3 h-3 mr-1" />
-          <span>{typeof video.views === 'number' ? video.views.toLocaleString() : 0} views</span>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
+        <h3 className="truncate text-sm font-semibold text-white drop-shadow-md">{video.title}</h3>
+        <div className="mt-1 flex items-center gap-1 text-xs text-white/60">
+          <Play className="h-3 w-3" />
+          <span className="tabular-nums">{typeof video.views === 'number' ? video.views.toLocaleString() : 0} vues</span>
         </div>
       </div>
     </div>
@@ -31,7 +32,7 @@ function VideoCard({ video, onSelect, isOwner, onDeleted }) {
 
 export default function VideoGrid({ videos, onSelect, isOwner, onDeleted }) {
   return (
-    <div className="grid grid-cols-2 gap-4 p-4">
+    <div className="grid grid-cols-2 gap-3 py-4 sm:grid-cols-3">
       {videos.map((video) => (
         <VideoCard
           key={video.id}

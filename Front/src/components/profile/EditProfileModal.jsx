@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { toast } from 'sonner'
-import { toBase64 } from '@/lib/utils'
+import { cn, toBase64 } from '@/lib/utils'
 import { BASE_API, API_VERSION } from '../../config.json'
 
 export default function EditProfileModal({ profile, onClose, onUpdated }) {
@@ -53,36 +53,44 @@ export default function EditProfileModal({ profile, onClose, onUpdated }) {
     }
   }
 
+  const fieldClass = "rounded-2xl border-white/10 bg-white/[0.04] text-sm text-white ring-offset-transparent placeholder:text-white/30 focus-visible:border-fuchsia-400/50 focus-visible:ring-0 focus-visible:ring-offset-0"
+
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent>
+      <DialogContent className="rounded-[2rem] border-white/10 bg-[#0b0b10]/95 text-white backdrop-blur-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle className="text-xl font-extrabold tracking-tight">Modifier le profil</DialogTitle>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-5">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
+            <Avatar className="h-16 w-16 border border-white/10">
               <AvatarImage src={avatar || "/placeholder.svg"} />
-              <AvatarFallback>{(name || 'U').charAt(0)}</AvatarFallback>
+              <AvatarFallback className="bg-white/10 text-lg font-semibold text-white/70">{(name || 'U').charAt(0)}</AvatarFallback>
             </Avatar>
             <label className="inline-block">
               <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-              <span className="px-3 py-2 border rounded-md cursor-pointer">Change picture</span>
+              <span className="cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white">
+                Changer la photo
+              </span>
             </label>
           </div>
           <div>
-            <label className="block text-sm mb-1">Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} minLength={3} maxLength={50} required />
+            <label className="mb-1.5 block text-xs uppercase tracking-[0.15em] text-white/40">Nom</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} minLength={3} maxLength={50} required className={cn("h-12", fieldClass)} />
           </div>
           <div>
-            <label className="block text-sm mb-1">Bio</label>
-            <Textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={150} />
-            <div className="text-right text-xs text-gray-500">{bio.length}/150</div>
+            <label className="mb-1.5 block text-xs uppercase tracking-[0.15em] text-white/40">Bio</label>
+            <Textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={150} className={cn("resize-none", fieldClass)} />
+            <div className="mt-1 text-right text-xs text-white/30">{bio.length}/150</div>
           </div>
-          {error && <div className="text-sm text-red-500">{error}</div>}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
+          {error && <div className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="ghost" size={null} onClick={onClose} className="rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm text-white hover:bg-white/10 hover:text-white">
+              Annuler
+            </Button>
+            <Button type="submit" size={null} disabled={saving} className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black transition-transform hover:bg-white hover:scale-[1.03] active:scale-95 disabled:opacity-40">
+              {saving ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

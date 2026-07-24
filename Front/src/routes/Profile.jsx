@@ -5,11 +5,11 @@ import BottomNav from "@/components/nav/BottomNav";
 import { Button } from "@/components/ui/button";
 import CopyButton from "@/components/ui/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Grid, Heart, UserPlus, Share2, MessageCircle } from 'lucide-react';
+import { Edit, Grid, Heart, Share2, MessageCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { resolvePlaybackIds } from '@/lib/utils';
+import { cn, resolvePlaybackIds } from '@/lib/utils';
 import { BASE_API, API_VERSION } from '../config.json';
 import VideoGrid from '@/components/video/VideoGrid';
 import FollowOverlay from '@/components/profile/FollowOverlay';
@@ -200,7 +200,11 @@ export default function Profile() {
   };
 
   if (!user || !profileUser) {
-    return <div>Loading...</div>;
+    return (
+      <div className="vibby-landing flex min-h-screen w-full items-center justify-center bg-[#07070a] text-white">
+        <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+      </div>
+    );
   }
 
   const profileUrl = profileUser.username
@@ -208,80 +212,111 @@ export default function Profile() {
     : `${window.location.origin}/profile?id=${profileUser.id}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100">
-      <div className="max-w-2xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
-        <div className="relative h-40 bg-gradient-to-r from-purple-400 to-pink-500">
-          <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
-            <Avatar className="w-32 h-32 border-4 border-white">
-              <AvatarImage src={profileUser.avatar || "/placeholder.svg"} alt={profileUser.name || "User"} />
-              <AvatarFallback>{profileUser.name?.charAt(0) || "U"}</AvatarFallback>
-            </Avatar>
-          </div>
+    <div className="vibby-landing relative min-h-screen w-full bg-[#07070a] pb-28 text-white antialiased selection:bg-fuchsia-500/30">
+      <div className="relative h-44 overflow-hidden sm:h-52">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-700/50 via-fuchsia-700/30 to-[#07070a]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(217,70,239,0.25),transparent_60%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#07070a] to-transparent" />
+      </div>
+
+      <div className="mx-auto max-w-2xl px-5">
+        <div className="-mt-16 flex flex-col items-center text-center">
+          <Avatar className="h-28 w-28 border-4 border-[#07070a] shadow-2xl">
+            <AvatarImage src={profileUser.avatar || "/placeholder.svg"} alt={profileUser.name || "User"} />
+            <AvatarFallback className="bg-white/10 text-2xl font-semibold text-white/70">{profileUser.name?.charAt(0) || "U"}</AvatarFallback>
+          </Avatar>
+
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight">{profileUser.name || "Anonymous User"}</h1>
+          {profileUser.username && (
+            <p className="mt-0.5 text-sm text-white/40">@{profileUser.username}</p>
+          )}
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-white/60">{profileUser.bio || "Pas encore de bio."}</p>
         </div>
 
-        <div className="mt-20 text-center">
-          <h1 className="text-2xl font-bold">{profileUser.name || "Anonymous User"}</h1>
-          <p className="text-gray-600 mt-1">{profileUser.username ? `@${profileUser.username}` : ''}</p>
-          <p className="mt-2 px-4">{profileUser.bio || "No bio available"}</p>
-        </div>
-
-        <div className="flex justify-center space-x-4 mt-4">
+        <div className="mt-6 flex justify-center gap-2">
           {isOwner ? (
             <>
-              <Button variant="outline" size="sm" onClick={() => setShowEdit(true)}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
+              <Button
+                variant="ghost"
+                size={null}
+                onClick={() => setShowEdit(true)}
+                className="rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm text-white backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Modifier
               </Button>
-              <CopyButton variant="outline" size="sm" text={profileUrl} successMessage="Profile link copied" errorMessage="Copy failed">
-                <Share2 className="w-4 h-4" />
+              <CopyButton variant="ghost" size={null} text={profileUrl} successMessage="Profile link copied" errorMessage="Copy failed" className="rounded-full border border-white/15 bg-white/5 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white">
+                <Share2 className="h-4 w-4" />
               </CopyButton>
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" onClick={handleFollowToggle}>
-                <UserPlus className="w-4 h-4 mr-2" />
-                {relationship.i_follow ? 'Unfollow' : (relationship.follows_me ? 'Follow back' : 'Follow')}
+              <Button
+                variant="ghost"
+                size={null}
+                onClick={handleFollowToggle}
+                className={cn(
+                  "rounded-full px-6 py-2.5 text-sm font-semibold transition-transform hover:scale-[1.03] active:scale-95",
+                  relationship.i_follow
+                    ? "border border-white/15 bg-white/5 text-white backdrop-blur-md hover:bg-white/10 hover:text-white"
+                    : "bg-white text-black hover:bg-white"
+                )}
+              >
+                {relationship.i_follow ? 'Abonné' : (relationship.follows_me ? 'Suivre en retour' : 'Suivre')}
               </Button>
-              <Button variant="outline" size="sm">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Message
+              <Button
+                variant="ghost"
+                size={null}
+                className="rounded-full border border-white/15 bg-white/5 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Message"
+              >
+                <MessageCircle className="h-4 w-4" />
               </Button>
-              <CopyButton variant="outline" size="sm" text={profileUrl} successMessage="Profile link copied" errorMessage="Copy failed">
-                <Share2 className="w-4 h-4" />
+              <CopyButton variant="ghost" size={null} text={profileUrl} successMessage="Profile link copied" errorMessage="Copy failed" className="rounded-full border border-white/15 bg-white/5 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white">
+                <Share2 className="h-4 w-4" />
               </CopyButton>
             </>
           )}
         </div>
 
-        <div className="flex justify-center space-x-8 py-6 border-y border-gray-200 mt-6">
-          <button onClick={loadFollowing} className="text-center">
-            <p className="font-semibold text-xl">{profileUser.following?.toLocaleString() || 0}</p>
-            <p className="text-gray-600 text-sm">Following</p>
+        <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03] py-4">
+          <button onClick={loadFollowing} className="flex flex-col items-center transition-opacity hover:opacity-70">
+            <span className="text-xl font-bold tabular-nums">{profileUser.following?.toLocaleString() || 0}</span>
+            <span className="mt-0.5 text-[11px] uppercase tracking-[0.15em] text-white/40">Abonnements</span>
           </button>
-          <button onClick={loadFollowers} className="text-center">
-            <p className="font-semibold text-xl">{profileUser.followers?.toLocaleString() || 0}</p>
-            <p className="text-gray-600 text-sm">Followers</p>
+          <button onClick={loadFollowers} className="flex flex-col items-center transition-opacity hover:opacity-70">
+            <span className="text-xl font-bold tabular-nums">{profileUser.followers?.toLocaleString() || 0}</span>
+            <span className="mt-0.5 text-[11px] uppercase tracking-[0.15em] text-white/40">Abonnés</span>
           </button>
-          <div className="text-center">
-            <p className="font-semibold text-xl">{(typeof totalLikes === 'number' ? totalLikes : 0).toLocaleString()}</p>
-            <p className="text-gray-600 text-sm">Likes</p>
+          <div className="flex flex-col items-center">
+            <span className="text-xl font-bold tabular-nums">{(typeof totalLikes === 'number' ? totalLikes : 0).toLocaleString()}</span>
+            <span className="mt-0.5 text-[11px] uppercase tracking-[0.15em] text-white/40">J'aime</span>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-6">
-          <TabsList className="w-full flex justify-around border-b">
-            <TabsTrigger value="videos" className="flex-1 py-2">
-              <Grid className="w-5 h-5 mr-2" />
-              Videos
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8 w-full">
+          <TabsList className="flex w-full justify-around gap-2 border-b border-white/10 bg-transparent p-0">
+            <TabsTrigger
+              value="videos"
+              className="flex-1 gap-2 rounded-none border-b-2 border-transparent bg-transparent py-3 text-white/40 transition-colors data-[state=active]:border-fuchsia-500 data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:shadow-none"
+            >
+              <Grid className="h-4 w-4" />
+              Vidéos
             </TabsTrigger>
-            <TabsTrigger value="liked" className="flex-1 py-2">
-              <Heart className="w-5 h-5 mr-2" />
-              Liked
+            <TabsTrigger
+              value="liked"
+              className="flex-1 gap-2 rounded-none border-b-2 border-transparent bg-transparent py-3 text-white/40 transition-colors data-[state=active]:border-fuchsia-500 data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:shadow-none"
+            >
+              <Heart className="h-4 w-4" />
+              J'aime
             </TabsTrigger>
           </TabsList>
           <TabsContent value="videos">
             {loadingVideos ? (
-              <div className="h-48 flex items-center justify-center text-gray-500">Loading videos...</div>
+              <div className="flex h-48 items-center justify-center gap-2 text-sm text-white/40">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Chargement...
+              </div>
             ) : videos.length ? (
               <VideoGrid
                 videos={videos}
@@ -290,12 +325,15 @@ export default function Profile() {
                 onDeleted={(id) => setVideos(prev => prev.filter(v => v.id !== id))}
               />
             ) : (
-              <div className="h-48 flex items-center justify-center text-gray-500">{error || 'No video'}</div>
+              <div className="flex h-48 items-center justify-center text-sm text-white/40">{error || 'Aucune vidéo'}</div>
             )}
           </TabsContent>
           <TabsContent value="liked">
             {loadingLiked ? (
-              <div className="h-48 flex items-center justify-center text-gray-500">Loading liked videos...</div>
+              <div className="flex h-48 items-center justify-center gap-2 text-sm text-white/40">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Chargement...
+              </div>
             ) : likedVideos.length ? (
               <VideoGrid
                 videos={likedVideos}
@@ -303,7 +341,7 @@ export default function Profile() {
                 isOwner={false}
               />
             ) : (
-              <div className="h-48 flex items-center justify-center text-gray-500">{likedError || 'No liked video'}</div>
+              <div className="flex h-48 items-center justify-center text-sm text-white/40">{likedError || 'Aucune vidéo aimée'}</div>
             )}
           </TabsContent>
         </Tabs>
