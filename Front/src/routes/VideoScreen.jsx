@@ -156,8 +156,6 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
           videoId={video.id}
           isOwner={isOwner}
           onDeleted={onDeleted}
-          triggerClassName="text-white hover:bg-white/20"
-          menuClassName="bg-black/60 backdrop-blur text-white"
         />
       </div>
 

@@ -241,8 +241,6 @@ export default function VideoWatch() {
                 videoId={video.id}
                 isOwner={isOwner}
                 onDeleted={() => navigate(-1)}
-                triggerClassName="text-white hover:bg-white/20"
-                menuClassName="bg-black/60 backdrop-blur text-white"
               />
             </div>
 

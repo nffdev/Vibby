@@ -2,7 +2,11 @@ import ActionMenu from '@/components/ui/ActionMenu'
 import CopyButton from '@/components/ui/CopyButton'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { BASE_API, API_VERSION } from '../../config.json'
+
+const DEFAULT_TRIGGER = "rounded-full border border-white/10 bg-black/40 p-2.5 text-white backdrop-blur-md transition-colors hover:border-white/25 hover:bg-black/60 hover:text-white"
+const DEFAULT_MENU = "border border-white/10 bg-[#0b0b10]/95 backdrop-blur-xl text-white"
 
 export default function VideoActionMenu({ videoId, isOwner, onDeleted, triggerClassName, menuClassName }) {
   const handleDelete = async (close) => {
@@ -22,27 +26,31 @@ export default function VideoActionMenu({ videoId, isOwner, onDeleted, triggerCl
   }
 
   return (
-    <ActionMenu triggerClassName={triggerClassName} menuClassName={menuClassName}>
+    <ActionMenu
+      triggerClassName={cn(DEFAULT_TRIGGER, triggerClassName)}
+      menuClassName={cn(DEFAULT_MENU, menuClassName)}
+    >
       {({ close }) => (
         <>
           {isOwner && (
             <Button
               variant="ghost"
-              className="justify-start text-white hover:bg-white/20"
+              size={null}
+              className="justify-start rounded-lg px-3 py-2 text-sm text-red-300 hover:bg-red-500/15 hover:text-red-200"
               onClick={() => handleDelete(close)}
             >
-              Delete video
+              Supprimer
             </Button>
           )}
           <CopyButton
             variant="ghost"
-            size="default"
-            className="justify-start text-white hover:bg-white/20"
+            size={null}
+            className="justify-start rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 hover:text-white"
             text={`${window.location.origin}/video/${videoId}`}
             onCopied={() => close()}
             successMessage="Link copied"
           >
-            Share
+            Partager
           </CopyButton>
         </>
       )}
