@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from "@/lib/hooks/useAuth"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, Search } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, Search, Play } from 'lucide-react'
 import VideoActionMenu from '@/components/video/VideoActionMenu'
 import ActionButton from '@/components/video/ActionButton'
 import CommentsOverlay from '@/components/video/CommentsOverlay'
@@ -17,6 +17,8 @@ import MuxPlayer from '@mux/mux-player-react'
 function VideoPlayer({ video, onInteraction, onDeleted }) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const playerRef = useRef(null)
+  const [paused, setPaused] = useState(false)
   const [interaction, setInteraction] = useState(video.liked ? 'like' : null)
   const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
   const [showThumb, setShowThumb] = useState(false)
@@ -105,16 +107,32 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
 
   const isOwner = user?.id && user.id === video.userId
 
+  const togglePlay = useCallback(() => {
+    const player = playerRef.current
+    if (!player) return
+    if (player.paused) {
+      player.play()?.catch(() => {})
+      setPaused(false)
+    } else {
+      player.pause()
+      setPaused(true)
+    }
+  }, [])
+
   return (
     <div className="relative mx-auto h-full w-full overflow-hidden bg-black md:aspect-[9/16] md:h-full md:w-auto md:rounded-3xl md:border md:border-white/10">
       {video.playback_id ? (
         <MuxPlayer
+          ref={playerRef}
           playbackId={video.playback_id}
           streamType="on-demand"
-          className="h-full w-full object-cover"
+          className="vibby-player h-full w-full object-cover"
           autoPlay
           muted
           loop
+          nohotkeys
+          onPlay={() => setPaused(false)}
+          onPause={() => setPaused(true)}
           onTimeUpdate={(e) => {
             const { currentTime, duration } = e.target
             setProgress(duration ? (currentTime / duration) * 100 : 0)
@@ -126,6 +144,29 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
           alt={video.description}
           className="h-full w-full object-cover"
         />
+      )}
+
+      {video.playback_id && (
+        <button
+          type="button"
+          aria-label={paused ? 'Lecture' : 'Pause'}
+          onClick={togglePlay}
+          className="absolute inset-0 z-[5] flex items-center justify-center"
+        >
+          <AnimatePresence>
+            {paused && (
+              <motion.span
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 1.3, opacity: 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-full bg-black/45 p-5 backdrop-blur-md"
+              >
+                <Play className="h-10 w-10 fill-white text-white" />
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       )}
 
       <div
@@ -155,8 +196,6 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
           videoId={video.id}
           isOwner={isOwner}
           onDeleted={onDeleted}
-          triggerClassName="text-white hover:bg-white/20"
-          menuClassName="bg-black/60 backdrop-blur text-white"
         />
       </div>
 

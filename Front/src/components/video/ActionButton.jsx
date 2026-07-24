@@ -7,7 +7,7 @@ export default function ActionButton({ icon: Icon, label, onClick, active, activ
       variant="ghost"
       size={null}
       onClick={onClick}
-      className="group flex h-auto flex-col items-center gap-1.5 p-0 text-white hover:bg-transparent"
+      className="group flex h-auto flex-col items-center gap-1.5 p-0 text-white hover:bg-transparent hover:text-white"
     >
       <span
         className={cn(

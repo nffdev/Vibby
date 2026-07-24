@@ -22,11 +22,12 @@ export default function ActionMenu({
     <div className="relative">
       <Button
         variant="ghost"
-        size="icon"
+        size={null}
+        aria-label="Options"
         className={cn(triggerClassName)}
         onClick={toggle}
       >
-        <MoreVertical className="h-6 w-6" />
+        <MoreVertical className="h-5 w-5" />
       </Button>
       {open && (
         <div className={cn(
