@@ -1,127 +1,105 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
+import { AtSign, Lock, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User, Lock, ArrowRight } from 'lucide-react';
+import AuthShell from "@/components/auth/AuthShell";
+import AuthField from "@/components/auth/AuthField";
 import { BASE_API, API_VERSION } from "../../config.json";
 
 export default function Login() {
-    const [datas, setDatas] = useState({ email: '', password: '' });
-    const [error, setError] = useState('');
+    const [datas, setDatas] = useState({ email: "", password: "" });
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     async function login() {
-        if (!datas.email) return setError('Email is required.');
-        if (!datas.password) return setError('Password is required.');
-        
-        fetch(`${BASE_API}/v${API_VERSION}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(datas)
-        })
-            .then(response => response.json())
-            .then(json => {
-                if (json.token) {
-                    localStorage.setItem('token', json.token);
-                    window.location.replace('/dash/dashboard');
-                } else {
-                    setError(json.message || 'An error occurred.');
-                }
-            })
-            .catch(() => setError('An error occurred.'));
+        if (!datas.email) return setError("Email is required.");
+        if (!datas.password) return setError("Password is required.");
+
+        setError("");
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${BASE_API}/v${API_VERSION}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datas),
+            });
+            const json = await response.json();
+
+            if (json.token) {
+                localStorage.setItem("token", json.token);
+                window.location.replace("/dash/dashboard");
+                return;
+            }
+            setError(json.message || "An error occurred.");
+        } catch {
+            setError("An error occurred.");
+        }
+        setLoading(false);
     }
 
-    return (
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center w-full min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-purple-400 to-pink-500 text-white"
-        >
-            <motion.div 
-                initial={{ y: -50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="w-full max-w-md space-y-8"
-            >
-                <div>
-                    <motion.h1 
-                        className="mt-6 text-center text-3xl font-extrabold"
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
-                    >
-                        Login to Your Account
-                    </motion.h1>
-                </div>
-                {error && (
-                    <motion.p 
-                        className="text-red-500 text-center"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                    >
-                        {error}
-                    </motion.p>
-                )}
-                <motion.form 
-                    className="mt-8 space-y-6"
-                    onSubmit={(e) => e.preventDefault()}
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                >
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div className="relative">
-                            <User className="absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-400" size={20} />
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm pl-10"
-                                placeholder="Email address"
-                                onChange={(e) => setDatas(prev => ({ ...prev, email: e.target.value }))}
-                            />
-                        </div>
-                        <div className="relative">
-                            <Lock className="absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-400" size={20} />
-                            <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm pl-10"
-                                placeholder="Password"
-                                onChange={(e) => setDatas(prev => ({ ...prev, password: e.target.value }))}
-                            />
-                        </div>
-                    </div>
+    const update = (key) => (e) => setDatas((prev) => ({ ...prev, [key]: e.target.value }));
 
-                    <div>
-                        <Button
-                            onClick={login}
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-purple-500 to-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                        >
-                            <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                                <ArrowRight className="h-5 w-5 text-white group-hover:text-gray-400" aria-hidden="true" />
-                            </span>
-                            Sign in
-                        </Button>
-                    </div>
-                </motion.form>
-            </motion.div>
-            <motion.div 
-                className="mt-8 text-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
+    return (
+        <AuthShell
+            eyebrow="Content de te revoir"
+            title="Reprends"
+            accent="le fil."
+            error={error}
+            footer={
+                <>
+                    Pas encore de compte ?{" "}
+                    <Link to="/auth/register" className="text-white underline-offset-4 transition hover:underline">
+                        Créer un compte
+                    </Link>
+                </>
+            }
+        >
+            <form
+                className="mt-8 space-y-3"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    login();
+                }}
             >
-                <Link to="/auth/register" className="font-medium text-white hover:text-gray-500 transition-colors">
-                    Don't have an account? Sign up
-                </Link>
-            </motion.div>
-        </motion.div>
+                <AuthField
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    icon={AtSign}
+                    label="Adresse email"
+                    value={datas.email}
+                    onChange={update("email")}
+                />
+                <AuthField
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    icon={Lock}
+                    label="Mot de passe"
+                    value={datas.password}
+                    onChange={update("password")}
+                />
+
+                <Button
+                    type="submit"
+                    variant="ghost"
+                    size={null}
+                    disabled={loading}
+                    className="group mt-6 w-full rounded-2xl bg-white py-4 text-sm font-semibold text-black transition-transform hover:bg-white hover:scale-[1.02] active:scale-95"
+                >
+                    {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <>
+                            Se connecter
+                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </>
+                    )}
+                </Button>
+            </form>
+        </AuthShell>
     );
 }
