@@ -1,6 +1,10 @@
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 const register = async (req, res) => {
     const { email, password, confirmPassword } = req.body;
@@ -49,7 +53,44 @@ const login = async (req, res) => {
     return res.json({ token: existing.token });
 }
 
+const googleAuth = async (req, res) => {
+    const { credential } = req.body;
+
+    if (!credential) return res.status(400).json({ message: 'Google credential is required.' });
+    if (!googleClient) return res.status(500).json({ message: 'Google authentication is not configured.' });
+
+    let payload;
+    try {
+        const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
+        payload = ticket.getPayload();
+    } catch {
+        return res.status(401).json({ message: 'Invalid Google credential.' });
+    }
+
+    const email = payload?.email;
+    const googleId = payload?.sub;
+    if (!email || !googleId) return res.status(401).json({ message: 'Invalid Google credential.' });
+
+    let user = await User.findOne({ googleId });
+    if (!user) user = await User.findOne({ email });
+
+    if (user) {
+        if (!user.googleId) {
+            user.googleId = googleId;
+            await user.save();
+        }
+        return res.json({ token: user.token });
+    }
+
+    const token = crypto.randomBytes(24).toString('hex');
+    user = new User({ id: crypto.randomUUID(), email, googleId, token });
+    await user.save();
+
+    return res.json({ token });
+}
+
 module.exports = {
     login,
-    register
+    register,
+    googleAuth
 };
