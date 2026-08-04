@@ -4,6 +4,7 @@ import { AtSign, Lock, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthShell from "@/components/auth/AuthShell";
 import AuthField from "@/components/auth/AuthField";
+import GoogleButton from "@/components/auth/GoogleButton";
 import { BASE_API, API_VERSION } from "../../config.json";
 
 export default function Login() {
@@ -100,6 +101,14 @@ export default function Login() {
                     )}
                 </Button>
             </form>
+
+            <div className="my-6 flex items-center gap-4">
+                <span className="h-px flex-1 bg-white/10" />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-white/30">ou</span>
+                <span className="h-px flex-1 bg-white/10" />
+            </div>
+
+            <GoogleButton onError={setError} />
         </AuthShell>
     );
 }
