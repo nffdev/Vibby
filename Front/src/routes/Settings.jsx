@@ -55,7 +55,7 @@ export default function Settings() {
                 icon={User}
                 label="Modifier le profil"
                 description="Nom, bio, photo"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate('/profile?edit=1')}
               />
               <SettingsRow
                 icon={Shield}

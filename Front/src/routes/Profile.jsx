@@ -38,7 +38,7 @@ async function loadAndResolveVideos(json) {
 export default function Profile() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("videos");
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
@@ -56,6 +56,15 @@ export default function Profile() {
   const [followingList, setFollowingList] = useState([]);
 
   const isOwner = user?.id === profileUser?.id;
+
+  useEffect(() => {
+    if (isOwner && searchParams.get('edit') === '1') {
+      setShowEdit(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('edit');
+      setSearchParams(next, { replace: true });
+    }
+  }, [isOwner, searchParams, setSearchParams]);
 
   useEffect(() => {
     const loadUser = async () => {
