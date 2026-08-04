@@ -1,4 +1,5 @@
 {
     "BASE_API": "http://localhost:8080",
-    "API_VERSION": 1
+    "API_VERSION": 1,
+    "GOOGLE_CLIENT_ID": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
 }
