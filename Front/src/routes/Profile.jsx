@@ -5,7 +5,7 @@ import BottomNav from "@/components/nav/BottomNav";
 import { Button } from "@/components/ui/button";
 import CopyButton from "@/components/ui/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Grid, Heart, Share2, MessageCircle, Loader2 } from 'lucide-react';
+import { Edit, Grid, Heart, Share2, MessageCircle, Loader2, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -38,7 +38,7 @@ async function loadAndResolveVideos(json) {
 export default function Profile() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("videos");
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
@@ -56,6 +56,15 @@ export default function Profile() {
   const [followingList, setFollowingList] = useState([]);
 
   const isOwner = user?.id === profileUser?.id;
+
+  useEffect(() => {
+    if (isOwner && searchParams.get('edit') === '1') {
+      setShowEdit(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('edit');
+      setSearchParams(next, { replace: true });
+    }
+  }, [isOwner, searchParams, setSearchParams]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -248,6 +257,15 @@ export default function Profile() {
               <CopyButton variant="ghost" size={null} text={profileUrl} successMessage="Profile link copied" errorMessage="Copy failed" className="rounded-full border border-white/15 bg-white/5 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white">
                 <Share2 className="h-4 w-4" />
               </CopyButton>
+              <Button
+                variant="ghost"
+                size={null}
+                onClick={() => navigate('/settings')}
+                aria-label="Paramètres"
+                className="rounded-full border border-white/15 bg-white/5 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             </>
           ) : (
             <>
