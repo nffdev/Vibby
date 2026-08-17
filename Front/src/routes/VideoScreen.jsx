@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from "@/lib/hooks/useAuth"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, MessageCircle, Share2, ThumbsDown, ThumbsUp, UserPlus, Search, Play } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Share2, ThumbsUp, UserPlus, Search, Play } from 'lucide-react'
 import VideoActionMenu from '@/components/video/VideoActionMenu'
 import ActionButton from '@/components/video/ActionButton'
 import CommentsOverlay from '@/components/video/CommentsOverlay'
@@ -19,71 +19,42 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
   const { user } = useAuth()
   const playerRef = useRef(null)
   const [paused, setPaused] = useState(false)
-  const [interaction, setInteraction] = useState(video.liked ? 'like' : null)
-  const [counts, setCounts] = useState({ likes: video.likes, dislikes: video.dislikes })
+  const [liked, setLiked] = useState(!!video.liked)
+  const [likes, setLikes] = useState(video.likes)
   const [showThumb, setShowThumb] = useState(false)
   const [isFollowingAuthor, setIsFollowingAuthor] = useState(false)
   const [progress, setProgress] = useState(0)
 
-  const manageInteraction = useCallback((type) => {
-    setInteraction((prev) => {
-      if (prev === type) {
-        setShowThumb(false)
-        return null
-      }
-      setShowThumb(true)
-      return type
+  const manageLike = useCallback(() => {
+    setLiked((prev) => {
+      setShowThumb(!prev)
+      setLikes((n) => n + (prev ? -1 : 1))
+      return !prev
     })
 
-    setCounts((prev) => {
-      if (type === 'like') {
-        return {
-          likes: prev.likes + (interaction === 'like' ? -1 : interaction === 'dislike' ? 1 : 1),
-          dislikes: interaction === 'dislike' ? prev.dislikes - 1 : prev.dislikes
-        }
-      } else {
-        return {
-          likes: interaction === 'like' ? prev.likes - 1 : prev.likes,
-          dislikes: prev.dislikes + (interaction === 'dislike' ? -1 : interaction === 'like' ? 1 : 1)
-        }
-      }
-    })
+    onInteraction('like', video.id)
 
-    onInteraction(type, video.id)
-
-    const sendInteraction = async () => {
+    const sendLike = async () => {
       try {
-        if (type === 'like') {
-          const r = await fetch(`${BASE_API}/v${API_VERSION}/likes/${video.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } })
-          const j = await r.json()
-          if (!r.ok) {
-            toast.error(j.message || 'Like failed')
-          } else {
-            setCounts(prev => ({ ...prev, likes: typeof j.likes === 'number' ? j.likes : prev.likes }))
-            toast.success(j.liked ? 'Added to liked' : 'Removed from liked')
-            onInteraction('like_state', video.id, { liked: j.liked })
-          }
+        const r = await fetch(`${BASE_API}/v${API_VERSION}/likes/${video.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } })
+        const j = await r.json()
+        if (!r.ok) {
+          toast.error(j.message || 'Like failed')
         } else {
-          const r = await fetch(`${BASE_API}/v${API_VERSION}/dislikes/${video.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } })
-          const j = await r.json()
-          if (!r.ok) {
-            toast.error(j.message || 'Dislike failed')
-          } else {
-            setCounts(prev => ({ ...prev, dislikes: typeof j.dislikes === 'number' ? j.dislikes : prev.dislikes }))
-            toast.success(j.disliked ? 'Added to dislikes' : 'Removed dislike')
-            onInteraction('dislike_state', video.id, { disliked: j.disliked })
-          }
+          if (typeof j.likes === 'number') setLikes(j.likes)
+          toast.success(j.liked ? 'Added to liked' : 'Removed from liked')
+          onInteraction('like_state', video.id, { liked: j.liked })
         }
       } catch {
         toast.error('Network error')
       }
     }
-    sendInteraction()
-  }, [interaction, video.id, onInteraction])
+    sendLike()
+  }, [video.id, onInteraction])
 
   useEffect(() => {
-    setInteraction(video.liked ? 'like' : (video.disliked ? 'dislike' : null))
-  }, [video.liked, video.disliked, video.id])
+    setLiked(!!video.liked)
+  }, [video.liked, video.id])
 
   useEffect(() => {
     const loadRelationship = async () => {
@@ -208,11 +179,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none"
           >
-            {interaction === 'like' ? (
-              <ThumbsUp className="h-28 w-28 fill-fuchsia-500 text-fuchsia-500 drop-shadow-[0_0_35px_rgba(236,72,153,0.55)]" />
-            ) : (
-              <ThumbsDown className="h-28 w-28 fill-red-500 text-red-500 drop-shadow-[0_0_35px_rgba(239,68,68,0.5)]" />
-            )}
+            <ThumbsUp className="h-28 w-28 fill-fuchsia-500 text-fuchsia-500 drop-shadow-[0_0_35px_rgba(236,72,153,0.55)]" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -224,20 +191,11 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
 
         <ActionButton
           icon={ThumbsUp}
-          label={counts.likes.toLocaleString()}
-          onClick={() => manageInteraction('like')}
-          active={interaction === 'like' || video.liked}
+          label={likes.toLocaleString()}
+          onClick={manageLike}
+          active={liked}
           activeClassName="border-transparent bg-gradient-to-br from-violet-500 to-fuchsia-500"
-          fill={interaction === 'like' || video.liked}
-        />
-
-        <ActionButton
-          icon={ThumbsDown}
-          label={counts.dislikes.toLocaleString()}
-          onClick={() => manageInteraction('dislike')}
-          active={interaction === 'dislike' || video.disliked}
-          activeClassName="border-transparent bg-red-500"
-          fill={interaction === 'dislike' || video.disliked}
+          fill={liked}
         />
 
         <ActionButton
@@ -294,27 +252,20 @@ export default function VideoScreen() {
           userId: v.userId,
           username: v.username,
           likes: typeof v.likes === 'number' ? v.likes : 0,
-          dislikes: typeof v.dislikes === 'number' ? v.dislikes : 0,
           comments: 0,
-          liked: false,
-          disliked: false
+          liked: false
         }))
         setVideos(mapped)
 
         const token = localStorage.getItem('token')
         if (token) {
           try {
-            const [rLikes, rDislikes] = await Promise.all([
-              fetch(`${BASE_API}/v${API_VERSION}/likes/me`, { headers: { 'Authorization': token } }),
-              fetch(`${BASE_API}/v${API_VERSION}/dislikes/me`, { headers: { 'Authorization': token } })
-            ])
-            const [jLikes, jDislikes] = await Promise.all([rLikes.json(), rDislikes.json()])
+            const rLikes = await fetch(`${BASE_API}/v${API_VERSION}/likes/me`, { headers: { 'Authorization': token } })
+            const jLikes = await rLikes.json()
             const likedIds = (rLikes.ok && Array.isArray(jLikes)) ? new Set(jLikes.map(v => v.id)) : new Set()
-            const dislikedIds = (rDislikes.ok && Array.isArray(jDislikes)) ? new Set(jDislikes.map(v => v.id)) : new Set()
             setVideos(prev => prev.map(v => ({
               ...v,
-              liked: likedIds.has(v.id) && !dislikedIds.has(v.id),
-              disliked: dislikedIds.has(v.id) && !likedIds.has(v.id)
+              liked: likedIds.has(v.id)
             })))
           } catch {}
         }
@@ -337,9 +288,7 @@ export default function VideoScreen() {
       setShareUrl(`${window.location.origin}/video/${videoId}`)
       setShowShare(true)
     } else if (type === 'like_state') {
-      setVideos(prev => prev.map(v => v.id === videoId ? { ...v, liked: !!(payload && payload.liked), disliked: (payload && payload.liked) ? false : v.disliked } : v))
-    } else if (type === 'dislike_state') {
-      setVideos(prev => prev.map(v => v.id === videoId ? { ...v, disliked: !!(payload && payload.disliked), liked: (payload && payload.disliked) ? false : v.liked } : v))
+      setVideos(prev => prev.map(v => v.id === videoId ? { ...v, liked: !!(payload && payload.liked) } : v))
     }
   }, [])
 
