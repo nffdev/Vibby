@@ -5,6 +5,7 @@ const userSchema = new Schema({
     email: String,
     password: String,
     googleId: String,
+    role: { type: String, default: 'user' },
     tokenVersion: { type: Number, default: 0 }
 });
 
