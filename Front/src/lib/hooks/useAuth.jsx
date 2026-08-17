@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { UserContext } from "@/lib/contexts/userContext";
 import { BASE_API, API_VERSION } from "../../config.json";
 import Login from "../../routes/auth/Login";
+import Banned from "../../routes/Banned";
 
 export function useAuth() {
 	return useContext(UserContext);
@@ -17,7 +18,7 @@ export function AuthWrapper({ children }) {
 	const location = useLocation();
 	
 	const auth = localStorage.getItem('token');
-	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/videoscreen');
+	const isBanned = localStorage.getItem('banned') === '1';
 
 	useEffect(() => {
 		if (!['/profile', '/upload', '/videoscreen', '/settings', '/admin'].some(path => window.location.pathname.startsWith(path)) || !auth || (user && user.id)) return;
@@ -26,7 +27,14 @@ export function AuthWrapper({ children }) {
 		async function getUser() {
 			const data = await fetch(`${BASE_API}/v${API_VERSION}/profiles/me`, { method: 'GET', headers: { 'Authorization': `${auth}` } }).then(response => response.json()).catch(() => null);
 			
-			if (data?.message === 'Unauthorized.' || data?.message === 'Account banned.') localStorage.removeItem('token');
+			if (data?.message === 'Account banned.') {
+				localStorage.removeItem('token');
+				localStorage.setItem('banned', '1');
+				window.location.replace('/banned');
+				return;
+			}
+
+			if (data?.message === 'Unauthorized.') localStorage.removeItem('token');
 
 			if (data?.error === 'COMPLETE_ONBOARDING') {
 				setOnboarding(true);
@@ -45,6 +53,13 @@ export function AuthWrapper({ children }) {
 
 		getUser();
 	}, [location]);
+
+	if (isBanned) {
+		if (window.location.pathname !== '/banned') return window.location.replace('/banned');
+		return <Banned />;
+	}
+
+	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/videoscreen');
 
 	if (onboarding) return <>{children}</>;
 	if (!['/profile', '/upload', '/videoscreen', '/settings', '/admin'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
