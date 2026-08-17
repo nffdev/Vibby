@@ -59,6 +59,8 @@ export function AuthWrapper({ children }) {
 		return <Banned />;
 	}
 
+	if (window.location.pathname === '/banned') return window.location.replace('/');
+
 	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/videoscreen');
 
 	if (onboarding) return <>{children}</>;
