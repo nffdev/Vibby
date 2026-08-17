@@ -18,12 +18,6 @@ const toggle = async (req, res) => {
             return res.status(200).json({ liked: false, likes: video.likes });
         }
         await new Like({ userId: req.user.id, videoId }).save();
-        const Dislike = require('../models/Dislike');
-        const existingDislike = await Dislike.findOne({ userId: req.user.id, videoId });
-        if (existingDislike) {
-            await Dislike.deleteOne({ _id: existingDislike._id });
-            video.dislikes = Math.max(0, (typeof video.dislikes === 'number' ? video.dislikes : 0) - 1);
-        }
         video.likes = (typeof video.likes === 'number' ? video.likes : 0) + 1;
         await video.save();
         return res.status(200).json({ liked: true, likes: video.likes });
@@ -35,9 +29,7 @@ const toggle = async (req, res) => {
 const listMe = async (req, res) => {
     try {
         const likes = await Like.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100);
-        const disliked = await require('../models/Dislike').find({ userId: req.user.id });
-        const dislikedIds = new Set(disliked.map(d => d.videoId));
-        const videoIds = likes.map(l => l.videoId).filter(id => !dislikedIds.has(id));
+        const videoIds = likes.map(l => l.videoId);
         const videos = videoIds.length ? await Video.find({ id: { $in: videoIds } }) : [];
         const byId = new Map(videos.map(v => [v.id, v]));
 
@@ -62,9 +54,7 @@ const listUser = async (req, res) => {
         const id = String(req.params.id || '').trim();
         if (!id) return res.status(400).json({ message: 'User id is required.' });
         const likes = await Like.find({ userId: id }).sort({ createdAt: -1 }).limit(100);
-        const disliked = await require('../models/Dislike').find({ userId: id });
-        const dislikedIds = new Set(disliked.map(d => d.videoId));
-        const videoIds = likes.map(l => l.videoId).filter(vid => !dislikedIds.has(vid));
+        const videoIds = likes.map(l => l.videoId);
         const videos = videoIds.length ? await Video.find({ id: { $in: videoIds } }) : [];
         const byId = new Map(videos.map(v => [v.id, v]));
 
