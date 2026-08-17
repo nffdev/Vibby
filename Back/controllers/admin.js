@@ -1,6 +1,7 @@
 const Report = require('../models/Report');
 const Video = require('../models/Video');
 const Profile = require('../models/Profile');
+const User = require('../models/User');
 const { removeVideo } = require('./videos');
 
 const listReports = async (req, res) => {
@@ -81,8 +82,35 @@ const deleteReportedVideo = async (req, res) => {
     }
 };
 
+const banUser = async (req, res) => {
+    try {
+        const userId = String(req.params.userId || '').trim();
+        if (!userId) return res.status(400).json({ message: 'User id is required.' });
+        if (userId === req.user.id) return res.status(400).json({ message: 'You cannot ban yourself.' });
+
+        const user = await User.findOne({ id: userId });
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+        if (user.role === 'admin') return res.status(400).json({ message: 'Cannot ban an admin.' });
+
+        user.banned = true;
+        user.tokenVersion = (user.tokenVersion || 0) + 1; 
+        await user.save();
+
+        const videos = await Video.find({ userId });
+        for (const video of videos) {
+            await removeVideo(video);
+            await Report.updateMany({ videoId: video.id, status: 'pending' }, { status: 'reviewed' });
+        }
+
+        return res.status(200).json({ message: 'User banned.', removedVideos: videos.length });
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
+};
+
 module.exports = {
     listReports,
     resolveReport,
     deleteReportedVideo,
+    banUser,
 };
