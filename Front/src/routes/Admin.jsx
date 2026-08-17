@@ -3,6 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2, ShieldAlert, Trash2, Check, X, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog'
 import { BASE_API, API_VERSION } from '../config.json'
 
 const REASON_LABELS = {
@@ -27,6 +37,7 @@ export default function Admin() {
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('pending')
+  const [confirmVideo, setConfirmVideo] = useState(null)
 
   const token = () => localStorage.getItem('token')
 
@@ -82,6 +93,7 @@ export default function Admin() {
       toast.success('Vidéo supprimée')
       setReports((prev) => prev.filter((rep) => rep.video?.id !== videoId))
     } catch { toast.error('Network error') }
+    finally { setConfirmVideo(null) }
   }
 
   if (checking) {
@@ -164,7 +176,7 @@ export default function Admin() {
                     <div className="flex shrink-0 flex-col gap-1.5">
                       {!rep.video?.deleted && (
                         <button
-                          onClick={() => deleteVideo(rep.video.id)}
+                          onClick={() => setConfirmVideo(rep.video)}
                           aria-label="Supprimer la vidéo"
                           className="flex items-center gap-1.5 rounded-full border border-red-500/25 bg-red-500/10 px-3 py-1.5 text-xs text-red-200 transition-colors hover:bg-red-500/20"
                         >
@@ -210,6 +222,29 @@ export default function Admin() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!confirmVideo} onOpenChange={(o) => { if (!o) setConfirmVideo(null) }}>
+        <AlertDialogContent className="rounded-[2rem] border-white/10 bg-[#0b0b10]/95 text-white backdrop-blur-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-extrabold tracking-tight">Supprimer cette vidéo ?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/50">
+              « {confirmVideo?.title || 'Sans titre'} » sera définitivement supprimée, y compris chez l'hébergeur.
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-full border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmVideo && deleteVideo(confirmVideo.id)}
+              className="rounded-full bg-red-500 text-white hover:bg-red-600"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
