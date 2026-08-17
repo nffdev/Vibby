@@ -1,5 +1,6 @@
 const Follow = require('../models/Follow');
 const Profile = require('../models/Profile');
+const { createNotification } = require('./notifications');
 
 const toggle = async (req, res) => {
     try {
@@ -25,6 +26,8 @@ const toggle = async (req, res) => {
         const you = await Profile.findOne({ id: targetId });
         if (me) { me.following = (typeof me.following === 'number' ? me.following : 0) + 1; await me.save(); }
         if (you) { you.followers = (typeof you.followers === 'number' ? you.followers : 0) + 1; await you.save(); }
+
+        await createNotification({ userId: targetId, actorId: req.user.id, type: 'follow' });
 
         return res.status(200).json({ following: true });
     } catch {
