@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '@/components/nav/BottomNav'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, User, Shield, LogOut, ChevronRight } from 'lucide-react'
+import { ArrowLeft, User, Shield, LogOut, ChevronRight, ShieldAlert } from 'lucide-react'
+import { BASE_API, API_VERSION } from '../config.json'
 
 function SettingsRow({ icon: Icon, label, description, onClick }) {
   return (
@@ -23,6 +25,16 @@ function SettingsRow({ icon: Icon, label, description, onClick }) {
 
 export default function Settings() {
   const navigate = useNavigate()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`${BASE_API}/v${API_VERSION}/admin/me`, { headers: { Authorization: token } })
+      .then((r) => r.json())
+      .then((j) => setIsAdmin(!!j.admin))
+      .catch(() => {})
+  }, [])
 
   const logout = () => {
     localStorage.removeItem('token')
@@ -64,6 +76,18 @@ export default function Settings() {
               />
             </div>
           </div>
+
+          {isAdmin && (
+            <div>
+              <span className="mb-3 block text-xs uppercase tracking-[0.15em] text-white/35">Modération</span>
+              <SettingsRow
+                icon={ShieldAlert}
+                label="Signalements"
+                description="Gérer les vidéos signalées"
+                onClick={() => navigate('/admin')}
+              />
+            </div>
+          )}
 
           <div>
             <span className="mb-3 block text-xs uppercase tracking-[0.15em] text-white/35">Session</span>
