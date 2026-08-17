@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ArrowLeft, Loader2, ShieldAlert, Trash2, Check, X, RotateCcw, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -35,7 +36,9 @@ export default function Admin() {
   const [checking, setChecking] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [reports, setReports] = useState([])
+  const [bannedUsers, setBannedUsers] = useState([])
   const [loading, setLoading] = useState(false)
+  const [tab, setTab] = useState('reports')
   const [filter, setFilter] = useState('pending')
   const [confirmVideo, setConfirmVideo] = useState(null)
   const [confirmBan, setConfirmBan] = useState(null)
@@ -66,9 +69,33 @@ export default function Admin() {
     setLoading(false)
   }, [filter])
 
+  const loadBanned = useCallback(async () => {
+    setLoading(true)
+    try {
+      const r = await fetch(`${BASE_API}/v${API_VERSION}/admin/banned`, { headers: { Authorization: token() } })
+      const j = await r.json()
+      if (r.ok && Array.isArray(j)) setBannedUsers(j)
+    } catch {}
+    setLoading(false)
+  }, [])
+
   useEffect(() => {
-    if (isAdmin) loadReports()
-  }, [isAdmin, loadReports])
+    if (!isAdmin) return
+    if (tab === 'reports') loadReports()
+    else loadBanned()
+  }, [isAdmin, tab, loadReports, loadBanned])
+
+  const unban = async (userId) => {
+    try {
+      const r = await fetch(`${BASE_API}/v${API_VERSION}/admin/users/${userId}/unban`, {
+        method: 'POST',
+        headers: { Authorization: token() },
+      })
+      if (!r.ok) { toast.error('Action échouée'); return }
+      toast.success('Compte débanni')
+      setBannedUsers((prev) => prev.filter((u) => u.id !== userId))
+    } catch { toast.error('Network error') }
+  }
 
   const resolve = async (id, action) => {
     try {
@@ -146,9 +173,28 @@ export default function Admin() {
         </button>
 
         <span className="text-[10px] uppercase tracking-[0.3em] text-white/40">Modération</span>
-        <h1 className="mt-3 text-[2.5rem] font-extrabold leading-[0.95] tracking-tight">Signalements</h1>
+        <h1 className="mt-3 text-[2.5rem] font-extrabold leading-[0.95] tracking-tight">
+          {tab === 'reports' ? 'Signalements' : 'Comptes bannis'}
+        </h1>
 
-        <div className="mt-8 flex flex-wrap gap-2">
+        <div className="mt-8 flex gap-2 border-b border-white/10">
+          {[{ value: 'reports', label: 'Signalements' }, { value: 'banned', label: 'Bannis' }].map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setTab(t.value)}
+              className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
+                tab === t.value
+                  ? 'border-fuchsia-500 text-white'
+                  : 'border-transparent text-white/40 hover:text-white'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'reports' && (
+        <div className="mt-6 flex flex-wrap gap-2">
           {FILTERS.map((f) => (
             <button
               key={f.value}
@@ -163,7 +209,9 @@ export default function Admin() {
             </button>
           ))}
         </div>
+        )}
 
+        {tab === 'reports' && (
         <div className="mt-6 space-y-3">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-white/40">
@@ -245,6 +293,46 @@ export default function Admin() {
             </div>
           )}
         </div>
+        )}
+
+        {tab === 'banned' && (
+        <div className="mt-6 space-y-3">
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-white/40">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Chargement...
+            </div>
+          ) : bannedUsers.length ? (
+            bannedUsers.map((u) => (
+              <div key={u.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <Avatar className="h-10 w-10 border border-white/10">
+                  <AvatarImage src={u.avatar} />
+                  <AvatarFallback className="bg-white/10 text-xs font-medium text-white/70">
+                    {(u.name || u.username || u.email || 'U').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{u.name || 'Sans nom'}</p>
+                  <p className="truncate text-xs text-white/40">
+                    {u.username ? `@${u.username}` : u.email}
+                  </p>
+                </div>
+                <button
+                  onClick={() => unban(u.id)}
+                  className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition-colors hover:bg-white/10"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Débannir
+                </button>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center gap-3 py-16 text-center">
+              <Check className="h-8 w-8 text-white/15" />
+              <p className="text-sm text-white/40">Aucun compte banni.</p>
+            </div>
+          )}
+        </div>
+        )}
       </div>
 
       <AlertDialog open={!!confirmVideo} onOpenChange={(o) => { if (!o) setConfirmVideo(null) }}>
