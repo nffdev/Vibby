@@ -10,7 +10,6 @@ const videoSchema = new Schema({
     title: String,
     description: String,
     likes: { type: Number, default: 0 },
-    dislikes: { type: Number, default: 0 },
     status: { type: String, default: 'preparing' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
