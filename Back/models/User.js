@@ -6,6 +6,7 @@ const userSchema = new Schema({
     password: String,
     googleId: String,
     role: { type: String, default: 'user' },
+    banned: { type: Boolean, default: false },
     tokenVersion: { type: Number, default: 0 }
 });
 
