@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2, ShieldAlert, Trash2, Check, X, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Loader2, ShieldAlert, Trash2, Check, X, RotateCcw, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -38,6 +38,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('pending')
   const [confirmVideo, setConfirmVideo] = useState(null)
+  const [confirmBan, setConfirmBan] = useState(null)
 
   const token = () => localStorage.getItem('token')
 
@@ -94,6 +95,20 @@ export default function Admin() {
       setReports((prev) => prev.filter((rep) => rep.video?.id !== videoId))
     } catch { toast.error('Network error') }
     finally { setConfirmVideo(null) }
+  }
+
+  const banUser = async (userId) => {
+    try {
+      const r = await fetch(`${BASE_API}/v${API_VERSION}/admin/users/${userId}/ban`, {
+        method: 'POST',
+        headers: { Authorization: token() },
+      })
+      const j = await r.json()
+      if (!r.ok) { toast.error(j.message || 'Bannissement échoué'); return }
+      toast.success('Utilisateur banni')
+      setReports((prev) => prev.filter((rep) => rep.video?.userId !== userId))
+    } catch { toast.error('Network error') }
+    finally { setConfirmBan(null) }
   }
 
   if (checking) {
@@ -183,6 +198,15 @@ export default function Admin() {
                           <Trash2 className="h-3.5 w-3.5" /> Supprimer
                         </button>
                       )}
+                      {rep.video?.userId && !rep.video?.deleted && (
+                        <button
+                          onClick={() => setConfirmBan(rep.video)}
+                          aria-label="Bannir l'auteur"
+                          className="flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-100 transition-colors hover:bg-red-500/30"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Bannir
+                        </button>
+                      )}
                       <button
                         onClick={() => resolve(rep.id, 'reviewed')}
                         className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/80 transition-colors hover:bg-white/10"
@@ -241,6 +265,29 @@ export default function Admin() {
               className="rounded-full bg-red-500 text-white hover:bg-red-600"
             >
               Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmBan} onOpenChange={(o) => { if (!o) setConfirmBan(null) }}>
+        <AlertDialogContent className="rounded-[2rem] border-white/10 bg-[#0b0b10]/95 text-white backdrop-blur-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-extrabold tracking-tight">Bannir cet utilisateur ?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/50">
+              L'auteur sera déconnecté immédiatement et ne pourra plus se connecter.
+              Toutes ses vidéos seront supprimées définitivement. Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-full border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmBan && banUser(confirmBan.userId)}
+              className="rounded-full bg-red-500 text-white hover:bg-red-600"
+            >
+              Bannir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
