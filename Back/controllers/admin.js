@@ -49,7 +49,7 @@ const resolveReport = async (req, res) => {
     try {
         const id = String(req.params.id || '').trim();
         const action = String(req.body?.action || '').trim();
-        if (!['reviewed', 'dismissed'].includes(action)) {
+        if (!['reviewed', 'dismissed', 'pending'].includes(action)) {
             return res.status(400).json({ message: 'Invalid action.' });
         }
 
