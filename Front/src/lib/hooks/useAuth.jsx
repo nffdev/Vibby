@@ -26,7 +26,7 @@ export function AuthWrapper({ children }) {
 		async function getUser() {
 			const data = await fetch(`${BASE_API}/v${API_VERSION}/profiles/me`, { method: 'GET', headers: { 'Authorization': `${auth}` } }).then(response => response.json()).catch(() => null);
 			
-			if (data?.message === 'Unauthorized.') localStorage.removeItem('token');
+			if (data?.message === 'Unauthorized.' || data?.message === 'Account banned.') localStorage.removeItem('token');
 
 			if (data?.error === 'COMPLETE_ONBOARDING') {
 				setOnboarding(true);
