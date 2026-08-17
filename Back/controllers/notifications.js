@@ -2,9 +2,22 @@ const crypto = require('node:crypto');
 const Notification = require('../models/Notification');
 const Profile = require('../models/Profile');
 
+const DEDUPE_HOURS = Number(process.env.NOTIFICATION_DEDUPE_HOURS) || 24;
+
 async function createNotification({ userId, actorId, type, videoId }) {
     try {
         if (!userId || !actorId || userId === actorId) return;
+        
+        const since = new Date(Date.now() - DEDUPE_HOURS * 60 * 60 * 1000);
+        const duplicate = await Notification.findOne({
+            userId,
+            actorId,
+            type,
+            videoId: videoId || null,
+            createdAt: { $gte: since },
+        });
+        if (duplicate) return;
+
         await new Notification({
             id: crypto.randomUUID(),
             userId,
