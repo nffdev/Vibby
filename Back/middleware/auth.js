@@ -17,6 +17,8 @@ module.exports = async (req, res, next) => {
     const user = await User.findOne({ id: payload.sub });
     if (!user) return res.status(401).json({ message: 'Unauthorized.' });
 
+    if (user.banned) return res.status(403).json({ message: 'Account banned.' });
+
     if ((user.tokenVersion || 0) !== (payload.ver || 0)) {
         return res.status(401).json({ message: 'Unauthorized.' });
     }

@@ -1,5 +1,12 @@
 const Profile = require('../models/Profile');
+const User = require('../models/User');
 const utils = require('../utils');
+
+async function withBannedFlag(profileJson) {
+    const user = await User.findOne({ id: profileJson.id });
+    profileJson.banned = !!(user && user.banned);
+    return profileJson;
+}
 
 const allowedInterests = [
     'Music', 'Dance', 'Comedy', 'Food', 'Travel', 'Fashion', 'Sports', 'Gaming',
@@ -111,6 +118,7 @@ const getByUsername = async (req, res) => {
 
         const final = profile.toJSON();
         delete final._id; delete final.__v;
+        await withBannedFlag(final);
         return res.status(200).json(final);
     } catch {
         return res.status(500).json({ message: 'Server error.' });
@@ -127,6 +135,7 @@ const getById = async (req, res) => {
 
         const final = profile.toJSON();
         delete final._id; delete final.__v;
+        await withBannedFlag(final);
         return res.status(200).json(final);
     } catch {
         return res.status(500).json({ message: 'Server error.' });

@@ -5,7 +5,7 @@ import BottomNav from "@/components/nav/BottomNav";
 import { Button } from "@/components/ui/button";
 import CopyButton from "@/components/ui/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Grid, Heart, Share2, MessageCircle, Loader2, Settings } from 'lucide-react';
+import { Edit, Grid, Heart, Share2, MessageCircle, Loader2, Settings, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -238,6 +238,12 @@ export default function Profile() {
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight">{profileUser.name || "Anonymous User"}</h1>
           {profileUser.username && (
             <p className="mt-0.5 text-sm text-white/40">@{profileUser.username}</p>
+          )}
+          {profileUser.banned && (
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-red-500/25 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-300">
+              <Ban className="h-3.5 w-3.5" />
+              Compte banni
+            </span>
           )}
           <p className="mt-3 max-w-md text-sm leading-relaxed text-white/60">{profileUser.bio || "Pas encore de bio."}</p>
         </div>
