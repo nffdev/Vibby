@@ -5,7 +5,7 @@ const userSchema = new Schema({
     email: String,
     password: String,
     googleId: String,
-    token: String
+    tokenVersion: { type: Number, default: 0 }
 });
 
 module.exports = model('user', userSchema);

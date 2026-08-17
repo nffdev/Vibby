@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+const { signToken } = require('../utils/jwt');
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
@@ -31,12 +32,11 @@ const register = async (req, res) => {
     // if (!passwordRegex.test(password)) return res.status(400).json({ message: 'The password must contain at least 8 characters, including at least one uppercase letter, one lowercase letter, one number and one special character.' });
 
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const token = crypto.randomBytes(24).toString('hex');
 
-    const user = new User({ id: crypto.randomUUID(), email, password: hashedPassword, token });
+    const user = new User({ id: crypto.randomUUID(), email, password: hashedPassword });
     await user.save();
 
-    return res.json({ token });
+    return res.json({ token: signToken(user) });
 }
 
 const login = async (req, res) => {
@@ -48,9 +48,10 @@ const login = async (req, res) => {
     const existing = await User.findOne({ email });
 
     if (!existing) return res.status(400).json({ message: 'Email or password is invalid.' });
+    if (!existing.password) return res.status(400).json({ message: 'Email or password is invalid.' });
     if (!bcrypt.compareSync(password, existing.password)) return res.status(400).json({ message: 'Email or password is invalid.' });
 
-    return res.json({ token: existing.token });
+    return res.json({ token: signToken(existing) });
 }
 
 const googleAuth = async (req, res) => {
@@ -79,14 +80,13 @@ const googleAuth = async (req, res) => {
             user.googleId = googleId;
             await user.save();
         }
-        return res.json({ token: user.token });
+        return res.json({ token: signToken(user) });
     }
 
-    const token = crypto.randomBytes(24).toString('hex');
-    user = new User({ id: crypto.randomUUID(), email, googleId, token });
+    user = new User({ id: crypto.randomUUID(), email, googleId });
     await user.save();
 
-    return res.json({ token });
+    return res.json({ token: signToken(user) });
 }
 
 module.exports = {
