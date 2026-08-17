@@ -108,9 +108,52 @@ const banUser = async (req, res) => {
     }
 };
 
+const listBannedUsers = async (req, res) => {
+    try {
+        const users = await User.find({ banned: true }).limit(200);
+        const ids = users.map(u => u.id);
+        const profiles = ids.length ? await Profile.find({ id: { $in: ids } }) : [];
+        const profileById = new Map(profiles.map(p => [p.id, p]));
+
+        const final = users.map(u => {
+            const p = profileById.get(u.id);
+            return {
+                id: u.id,
+                email: u.email,
+                username: p?.username,
+                name: p?.name,
+                avatar: p?.avatar,
+            };
+        });
+
+        return res.status(200).json(final);
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
+};
+
+const unbanUser = async (req, res) => {
+    try {
+        const userId = String(req.params.userId || '').trim();
+        if (!userId) return res.status(400).json({ message: 'User id is required.' });
+
+        const user = await User.findOne({ id: userId });
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+
+        user.banned = false;
+        await user.save();
+
+        return res.status(200).json({ message: 'User unbanned.' });
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
+};
+
 module.exports = {
     listReports,
     resolveReport,
     deleteReportedVideo,
     banUser,
+    listBannedUsers,
+    unbanUser,
 };
