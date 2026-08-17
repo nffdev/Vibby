@@ -1,6 +1,7 @@
 const Like = require('../models/Like');
 const Video = require('../models/Video');
 const { computeMuxViewsForVideo } = require('./videos');
+const { createNotification } = require('./notifications');
 
 const toggle = async (req, res) => {
     try {
@@ -20,6 +21,7 @@ const toggle = async (req, res) => {
         await new Like({ userId: req.user.id, videoId }).save();
         video.likes = (typeof video.likes === 'number' ? video.likes : 0) + 1;
         await video.save();
+        await createNotification({ userId: video.userId, actorId: req.user.id, type: 'like', videoId });
         return res.status(200).json({ liked: true, likes: video.likes });
     } catch {
         return res.status(500).json({ message: 'Server error.' });

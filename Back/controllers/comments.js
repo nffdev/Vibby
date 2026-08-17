@@ -2,6 +2,7 @@ const Comment = require('../models/Comment');
 const Profile = require('../models/Profile');
 const Video = require('../models/Video');
 const utils = require('../utils');
+const { createNotification } = require('./notifications');
 
 const listByVideo = async (req, res) => {
     try {
@@ -44,6 +45,10 @@ const create = async (req, res) => {
         const json = comment.toJSON(); delete json._id; delete json.__v; json.id = String(comment._id);
         const p = await Profile.findOne({ id: req.user.id });
         if (p) { json.username = p.username; json.name = p.name; json.avatar = p.avatar; }
+
+        const video = await Video.findOne({ id: videoId });
+        if (video) await createNotification({ userId: video.userId, actorId: req.user.id, type: 'comment', videoId });
+
         return res.status(201).json(json);
     } catch {
         return res.status(500).json({ message: 'Server error.' });
