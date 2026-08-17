@@ -1,13 +1,14 @@
 import React from 'react';
-import { Home, Plus, User } from 'lucide-react'; 
+import { Home, Plus, User } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import { useNavigate } from 'react-router-dom';
+import NotificationBell from '@/components/nav/NotificationBell';
 
 export default function BottomNav() {
   const navigate = useNavigate();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-20 mx-auto flex h-[4.5rem] max-w-md items-center justify-around gap-8 border-t border-white/10 bg-black/60 px-6 backdrop-blur-xl md:rounded-t-3xl md:border-x">
+    <div className="fixed bottom-0 left-0 right-0 z-20 mx-auto flex h-[4.5rem] max-w-md items-center justify-around gap-2 border-t border-white/10 bg-black/60 px-4 backdrop-blur-xl md:rounded-t-3xl md:border-x">
       <Button
         variant="ghost"
         size={null}
@@ -26,6 +27,8 @@ export default function BottomNav() {
       >
         <Plus className="h-6 w-6" />
       </Button>
+
+      <NotificationBell />
 
       <Button
         variant="ghost"
