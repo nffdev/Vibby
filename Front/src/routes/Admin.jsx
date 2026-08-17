@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2, ShieldAlert, Trash2, Check, X } from 'lucide-react'
+import { ArrowLeft, Loader2, ShieldAlert, Trash2, Check, X, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { BASE_API, API_VERSION } from '../config.json'
 
@@ -66,7 +66,8 @@ export default function Admin() {
         body: JSON.stringify({ action }),
       })
       if (!r.ok) { toast.error('Action échouée'); return }
-      toast.success(action === 'reviewed' ? 'Marqué traité' : 'Ignoré')
+      const messages = { reviewed: 'Marqué traité', dismissed: 'Ignoré', pending: 'Action annulée' }
+      toast.success(messages[action] || 'Mis à jour')
       setReports((prev) => prev.filter((rep) => rep.id !== id))
     } catch { toast.error('Network error') }
   }
@@ -181,6 +182,20 @@ export default function Admin() {
                         className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition-colors hover:bg-white/10"
                       >
                         <X className="h-3.5 w-3.5" /> Ignorer
+                      </button>
+                    </div>
+                  )}
+
+                  {rep.status !== 'pending' && (
+                    <div className="flex shrink-0 flex-col gap-1.5">
+                      <span className="rounded-full bg-white/5 px-3 py-1.5 text-center text-xs text-white/40">
+                        {rep.status === 'reviewed' ? 'Traité' : 'Ignoré'}
+                      </span>
+                      <button
+                        onClick={() => resolve(rep.id, 'pending')}
+                        className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/70 transition-colors hover:bg-white/10"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Annuler
                       </button>
                     </div>
                   )}
