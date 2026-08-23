@@ -66,10 +66,15 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        ambilight: {
+          "0%, 100%": { transform: "scale(1.05) rotate(0deg)" },
+          "50%": { transform: "scale(1.15) rotate(3deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        ambilight: "ambilight 8s ease-in-out infinite",
       },
     },
   },
