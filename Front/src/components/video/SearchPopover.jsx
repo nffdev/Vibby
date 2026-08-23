@@ -157,6 +157,15 @@ export default function SearchPopover() {
             )}
           </div>
         </Tabs>
+
+        {q.trim().length >= 2 && (
+          <button
+            onClick={() => go(`/search?q=${encodeURIComponent(q.trim())}`)}
+            className="w-full border-t border-white/10 py-3 text-center text-sm font-medium text-fuchsia-300 transition-colors hover:bg-white/[0.04]"
+          >
+            Voir tous les résultats
+          </button>
+        )}
       </PopoverContent>
     </Popover>
   )
