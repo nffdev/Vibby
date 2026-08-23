@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from "@/lib/hooks/useAuth"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, MessageCircle, Share2, ThumbsUp, UserPlus, Search, Play } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Share2, ThumbsUp, UserPlus, Search, Play, Volume2, VolumeX } from 'lucide-react'
 import VideoActionMenu from '@/components/video/VideoActionMenu'
 import ActionButton from '@/components/video/ActionButton'
 import CommentsOverlay from '@/components/video/CommentsOverlay'
@@ -14,7 +14,7 @@ import { resolvePlaybackIds } from "@/lib/utils"
 import { BASE_API, API_VERSION } from "../config.json"
 import MuxPlayer from '@mux/mux-player-react'
 
-function VideoPlayer({ video, onInteraction, onDeleted }) {
+function VideoPlayer({ video, muted, onInteraction, onDeleted }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const playerRef = useRef(null)
@@ -99,7 +99,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
           streamType="on-demand"
           className="vibby-player h-full w-full object-cover"
           autoPlay
-          muted
+          muted={muted}
           loop
           nohotkeys
           onPlay={() => setPaused(false)}
@@ -229,6 +229,7 @@ export default function VideoScreen() {
   const [showComments, setShowComments] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
+  const [muted, setMuted] = useState(true)
   const containerRef = useRef(null)
   const [videos, setVideos] = useState([])
   const [error, setError] = useState('')
@@ -388,7 +389,16 @@ export default function VideoScreen() {
         </Button>
       </div>
 
-      <div className="absolute top-3 sm:top-5 right-3 sm:right-5 z-20">
+      <div className="absolute top-3 sm:top-5 right-3 sm:right-5 z-20 flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size={null}
+          onClick={() => setMuted((m) => !m)}
+          aria-label={muted ? 'Activer le son' : 'Couper le son'}
+          className="rounded-full border border-white/10 bg-black/40 p-2.5 text-white backdrop-blur-md transition-colors hover:border-white/25 hover:bg-black/60 hover:text-white"
+        >
+          {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+        </Button>
         <Button
           variant="ghost"
           size={null}
@@ -430,6 +440,7 @@ export default function VideoScreen() {
             )}
             <VideoPlayer
               video={video}
+              muted={muted}
               onInteraction={manageInteraction}
               onDeleted={(id) => setVideos(prev => prev.filter(v => v.id !== id))}
             />
