@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from "@/lib/hooks/useAuth"
 import BottomNav from "@/components/nav/BottomNav"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, MessageCircle, Share2, ThumbsUp, UserPlus, Search, Play, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Share2, ThumbsUp, UserPlus, Play, Volume2, VolumeX } from 'lucide-react'
 import VideoActionMenu from '@/components/video/VideoActionMenu'
 import ActionButton from '@/components/video/ActionButton'
+import SearchPopover from '@/components/video/SearchPopover'
 import CommentsOverlay from '@/components/video/CommentsOverlay'
 import ShareOverlay from '@/components/video/ShareOverlay'
 import { toast } from 'sonner'
@@ -399,14 +400,7 @@ export default function VideoScreen() {
         >
           {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
         </Button>
-        <Button
-          variant="ghost"
-          size={null}
-          aria-label="Rechercher"
-          className="rounded-full border border-white/10 bg-black/40 p-2.5 text-white backdrop-blur-md transition-colors hover:border-white/25 hover:bg-black/60 hover:text-white"
-        >
-          <Search className="h-5 w-5" />
-        </Button>
+        <SearchPopover />
       </div>
 
       <div
