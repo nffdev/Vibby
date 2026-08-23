@@ -91,7 +91,7 @@ function VideoPlayer({ video, onInteraction, onDeleted }) {
   }, [])
 
   return (
-    <div className="relative mx-auto h-full w-full overflow-hidden bg-black md:aspect-[9/16] md:h-full md:w-auto md:rounded-3xl md:border md:border-white/10">
+      <div className="relative mx-auto h-full w-full overflow-hidden bg-black md:aspect-[9/16] md:h-full md:w-auto md:rounded-3xl md:border md:border-white/10">
       {video.playback_id ? (
         <MuxPlayer
           ref={playerRef}
@@ -405,7 +405,29 @@ export default function VideoScreen() {
         style={{ scrollSnapType: 'y mandatory' }}
       >
         {hasVideos ? videos.map((video, index) => (
-          <div key={video.id || index} className="flex h-full snap-start items-center justify-center md:py-4">
+          <div key={video.id || index} className="relative flex h-full snap-start items-center justify-center md:py-4">
+            {video.playback_id && (
+              <div aria-hidden className="pointer-events-none absolute inset-0 hidden items-center justify-center md:flex">
+                <img
+                  src={`https://image.mux.com/${video.playback_id}/thumbnail.jpg`}
+                  alt=""
+                  style={{
+                    maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 72%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 72%)',
+                  }}
+                  className="absolute h-[90%] w-[75rem] max-w-[95vw] animate-ambilight object-cover opacity-50 blur-[130px] saturate-[1.8]"
+                />
+                <img
+                  src={`https://image.mux.com/${video.playback_id}/thumbnail.jpg`}
+                  alt=""
+                  style={{
+                    maskImage: 'radial-gradient(ellipse at center, black 35%, transparent 68%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse at center, black 35%, transparent 68%)',
+                  }}
+                  className="absolute h-[80%] w-[34rem] max-w-[80vw] animate-ambilight object-cover opacity-80 blur-[70px] saturate-[1.6]"
+                />
+              </div>
+            )}
             <VideoPlayer
               video={video}
               onInteraction={manageInteraction}
