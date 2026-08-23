@@ -5,7 +5,7 @@ import BottomNav from "@/components/nav/BottomNav";
 import { Button } from "@/components/ui/button";
 import CopyButton from "@/components/ui/CopyButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Grid, Heart, Share2, MessageCircle, Loader2, Settings, Ban } from 'lucide-react';
+import { Edit, Grid, Heart, Share2, Loader2, Settings, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -287,14 +287,6 @@ export default function Profile() {
                 )}
               >
                 {relationship.i_follow ? 'Abonné' : (relationship.follows_me ? 'Suivre en retour' : 'Suivre')}
-              </Button>
-              <Button
-                variant="ghost"
-                size={null}
-                className="rounded-full border border-white/15 bg-white/5 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white"
-                aria-label="Message"
-              >
-                <MessageCircle className="h-4 w-4" />
               </Button>
               <CopyButton variant="ghost" size={null} text={profileUrl} successMessage="Profile link copied" errorMessage="Copy failed" className="rounded-full border border-white/15 bg-white/5 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white">
                 <Share2 className="h-4 w-4" />
