@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Plus, User } from 'lucide-react';
+import { Home, Search, Plus, User } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from '@/components/nav/NotificationBell';
@@ -17,6 +17,16 @@ export default function BottomNav() {
         onClick={() => navigate('/videoscreen')}
       >
         <Home className="h-6 w-6" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size={null}
+        aria-label="Rechercher"
+        className="rounded-full p-3 text-white transition-colors hover:bg-white/10 hover:text-white"
+        onClick={() => navigate('/search')}
+      >
+        <Search className="h-6 w-6" />
       </Button>
 
       <Button
