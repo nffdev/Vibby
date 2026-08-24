@@ -2,6 +2,11 @@ const crypto = require('node:crypto');
 const Video = require('../models/Video');
 const fetch = require('node-fetch').default;
 const Profile = require('../models/Profile');
+const Follow = require('../models/Follow');
+const {
+    LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, MAX_FOLLOWED,
+    encodeCursor, decodeCursor,
+} = require('../utils/feedRanking');
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
@@ -30,20 +35,100 @@ const createVideo = async (req, res) => {
 };
 
 const listVideos = async (req, res) => {
-    const videos = await Video.find({}).sort({ createdAt: -1 }).limit(50);
+    try {
+        const limit = Math.min(20, Math.max(1, parseInt(req.query.limit, 10) || 6));
+        const cursor = req.query.cursor ? decodeCursor(req.query.cursor) : null;
 
-    const userIds = [...new Set(videos.map(v => v.userId).filter(Boolean))];
-    const profiles = userIds.length ? await Profile.find({ id: { $in: userIds } }) : [];
-    const usernameById = new Map(profiles.map(p => [p.id, p.username]));
+        const nowMs = cursor ? cursor.ts : Date.now();
 
-    const final = videos.map(v => {
-        const json = v.toJSON();
-        delete json._id; delete json.__v;
-        json.username = usernameById.get(json.userId);
-        return json;
-    });
+        let followedIds = [];
+        if (req.user) {
+            const follows = await Follow.find({ followerId: req.user.id })
+                .select('userId')
+                .limit(MAX_FOLLOWED);
+            followedIds = follows.map(f => f.userId).filter(Boolean);
+        }
 
-    return res.status(200).json(final);
+        // score = (BASE_FLOOR + LIKE_WEIGHT*ln(1+likes) + COMMENT_WEIGHT*ln(1+comments))
+        //         * exp(-LAMBDA * ageHours) * (isFollowed ? FOLLOW_BOOST : 1)
+        const scoreExpr = {
+            $let: {
+                vars: {
+                    recency: {
+                        $exp: {
+                            $multiply: [
+                                -LAMBDA,
+                                { $divide: [{ $subtract: [nowMs, { $toLong: '$createdAt' }] }, 3600000] },
+                            ],
+                        },
+                    },
+                    engagement: {
+                        $add: [
+                            BASE_FLOOR,
+                            { $multiply: [LIKE_WEIGHT, { $ln: { $add: [1, { $ifNull: ['$likes', 0] }] } }] },
+                            { $multiply: [COMMENT_WEIGHT, { $ln: { $add: [1, '$commentCount'] } }] },
+                        ],
+                    },
+                    boost: { $cond: [{ $in: ['$userId', followedIds] }, FOLLOW_BOOST, 1] },
+                },
+                in: { $multiply: [{ $multiply: ['$$engagement', '$$recency'] }, '$$boost'] },
+            },
+        };
+
+        const pipeline = [
+            { $match: { playback_id: { $exists: true, $ne: null }, status: 'ready' } },
+            {
+                $lookup: {
+                    from: 'comments',
+                    let: { vid: '$id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$videoId', '$$vid'] } } },
+                        { $count: 'n' },
+                    ],
+                    as: 'c',
+                },
+            },
+            { $addFields: { commentCount: { $ifNull: [{ $arrayElemAt: ['$c.n', 0] }, 0] } } },
+            { $addFields: { score: scoreExpr } },
+        ];
+
+        if (cursor) {
+            pipeline.push({
+                $match: {
+                    $or: [
+                        { score: { $lt: cursor.score } },
+                        { score: cursor.score, id: { $gt: cursor.id } },
+                    ],
+                },
+            });
+        }
+
+        pipeline.push(
+            { $sort: { score: -1, id: 1 } },
+            { $limit: limit + 1 },
+            { $project: { _id: 0, __v: 0, c: 0 } },
+        );
+
+        const rows = await Video.aggregate(pipeline);
+
+        const hasMore = rows.length > limit;
+        const items = hasMore ? rows.slice(0, limit) : rows;
+
+        const userIds = [...new Set(items.map(v => v.userId).filter(Boolean))];
+        const profiles = userIds.length ? await Profile.find({ id: { $in: userIds } }) : [];
+        const usernameById = new Map(profiles.map(p => [p.id, p.username]));
+        items.forEach(v => { v.username = usernameById.get(v.userId); });
+
+        let nextCursor = null;
+        if (hasMore) {
+            const last = items[items.length - 1];
+            nextCursor = encodeCursor({ ts: nowMs, score: last.score, id: last.id });
+        }
+
+        return res.status(200).json({ items, nextCursor });
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
 };
 
 const resolveVideo = async (req, res) => {
