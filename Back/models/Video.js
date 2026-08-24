@@ -15,4 +15,8 @@ const videoSchema = new Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
+videoSchema.index({ id: 1 }, { unique: true });
+videoSchema.index({ userId: 1, createdAt: -1 });
+videoSchema.index({ status: 1, createdAt: -1 });
+
 module.exports = model('video', videoSchema);

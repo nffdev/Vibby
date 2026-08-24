@@ -7,4 +7,6 @@ const commentSchema = new Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+commentSchema.index({ videoId: 1 });
+
 module.exports = model('comment', commentSchema);
