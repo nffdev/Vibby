@@ -7,6 +7,7 @@ const {
     LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, MAX_FOLLOWED,
     encodeCursor, decodeCursor,
 } = require('../utils/feedRanking');
+const { publicVideoProjection, toPublicVideo } = require('../utils/publicVideo');
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
@@ -106,7 +107,7 @@ const listVideos = async (req, res) => {
         pipeline.push(
             { $sort: { score: -1, id: 1 } },
             { $limit: limit + 1 },
-            { $project: { _id: 0, __v: 0, c: 0 } },
+            { $project: publicVideoProjection(['commentCount', 'score']) },
         );
 
         const rows = await Video.aggregate(pipeline);
@@ -137,9 +138,7 @@ const resolveVideo = async (req, res) => {
     if (!video) return res.status(404).json({ message: 'Video not found.' });
 
     if (video.playback_id) {
-        const json = video.toJSON();
-        delete json._id; delete json.__v;
-        return res.status(200).json(json);
+        return res.status(200).json(toPublicVideo(video));
     }
 
     try {
@@ -173,8 +172,7 @@ const resolveVideo = async (req, res) => {
         }
 
         await video.save();
-        const final = video.toJSON(); delete final._id; delete final.__v;
-        return res.status(200).json(final);
+        return res.status(200).json(toPublicVideo(video));
     } catch (err) {
         return res.status(500).json({ message: 'Resolve error.' });
     }
@@ -229,8 +227,7 @@ const listUserVideos = async (req, res) => {
     const authHeader = (MUX_TOKEN_ID && MUX_TOKEN_SECRET) ? { 'Authorization': `Basic ${Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString('base64')}` } : null;
 
     const enriched = await Promise.all(videos.map(async v => {
-        const json = v.toJSON();
-        delete json._id; delete json.__v;
+        const json = toPublicVideo(v);
         json.username = username;
         json.views = 0;
         try {
