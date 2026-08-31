@@ -20,6 +20,7 @@ function decodeCursor(str) {
         if (typeof parsed.ts !== 'number' || typeof parsed.score !== 'number' || typeof parsed.id !== 'string') {
             return null;
         }
+        parsed.seed = (typeof parsed.seed === 'number' && parsed.seed > 0) ? parsed.seed : null;
         return parsed;
     } catch {
         return null;
