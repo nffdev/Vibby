@@ -5,7 +5,8 @@ const Profile = require('../models/Profile');
 const Follow = require('../models/Follow');
 const View = require('../models/View');
 const {
-    LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, VIEW_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, VIEWED_PENALTY, MAX_FOLLOWED, MAX_VIEWED,
+    LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, VIEW_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, VIEWED_PENALTY,
+    MAX_FOLLOWED, MAX_VIEWED, ANON_JITTER,
     encodeCursor, decodeCursor,
 } = require('../utils/feedRanking');
 const { publicVideoProjection, toPublicVideo } = require('../utils/publicVideo');
@@ -54,6 +55,9 @@ const listVideos = async (req, res) => {
             viewedIds = views.map(v => v.videoId).filter(Boolean);
         }
 
+        const anon = !req.user;
+        const seed = anon ? (cursor && typeof cursor.seed === 'number' ? cursor.seed : Math.floor(Math.random() * 1e9) + 1) : 0;
+
         // score = (BASE_FLOOR + LIKE_WEIGHT*ln(1+likes) + COMMENT_WEIGHT*ln(1+comments))
         //         * exp(-LAMBDA * ageHours) * (isFollowed ? FOLLOW_BOOST : 1)
         const scoreExpr = {
@@ -77,8 +81,17 @@ const listVideos = async (req, res) => {
                     },
                     boost: { $cond: [{ $in: ['$userId', followedIds] }, FOLLOW_BOOST, 1] },
                     seenPenalty: { $cond: [{ $in: ['$id', viewedIds] }, VIEWED_PENALTY, 1] },
+                    jitter: seed === 0 ? 1 : {
+                        $let: {
+                            vars: {
+                                h: { $mod: [{ $multiply: [{ $toLong: '$createdAt' }, seed] }, 1000] },
+                            },
+                            // map 0..999 -> [1 - ANON_JITTER/2, 1 + ANON_JITTER/2]
+                            in: { $add: [{ $subtract: [1, { $divide: [ANON_JITTER, 2] }] }, { $multiply: [{ $divide: ['$$h', 999] }, ANON_JITTER] }] },
+                        },
+                    },
                 },
-                in: { $multiply: [{ $multiply: [{ $multiply: ['$$engagement', '$$recency'] }, '$$boost'] }, '$$seenPenalty'] },
+                in: { $multiply: [{ $multiply: [{ $multiply: [{ $multiply: ['$$engagement', '$$recency'] }, '$$boost'] }, '$$seenPenalty'] }, '$$jitter'] },
             },
         };
 
@@ -117,7 +130,9 @@ const listVideos = async (req, res) => {
         let nextCursor = null;
         if (hasMore) {
             const last = items[items.length - 1];
-            nextCursor = encodeCursor({ ts: nowMs, score: last.score, id: last.id });
+            const payload = { ts: nowMs, score: last.score, id: last.id };
+            if (anon) payload.seed = seed;
+            nextCursor = encodeCursor(payload);
         }
 
         return res.status(200).json({ items, nextCursor });

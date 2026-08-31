@@ -8,6 +8,7 @@ const FOLLOW_BOOST = 3.0;
 const VIEWED_PENALTY = 0.1; 
 const MAX_FOLLOWED = 2000; 
 const MAX_VIEWED = 5000; 
+const ANON_JITTER = 0.3; 
 
 function encodeCursor(cursor) {
     return Buffer.from(JSON.stringify(cursor)).toString('base64url');
@@ -35,6 +36,7 @@ module.exports = {
     VIEWED_PENALTY,
     MAX_FOLLOWED,
     MAX_VIEWED,
+    ANON_JITTER,
     encodeCursor,
     decodeCursor,
 };
