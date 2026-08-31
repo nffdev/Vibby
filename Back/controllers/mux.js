@@ -6,8 +6,8 @@ const webhook = async (req, res) => {
 
     try {
         if (type === 'video.upload.asset_created') {
-            const assetId = data?.id;
-            const uploadId = data?.upload_id;
+            const assetId = typeof data?.id === 'string' ? data.id : null;
+            const uploadId = typeof data?.upload_id === 'string' ? data.upload_id : null;
             if (assetId && uploadId) {
                 await Video.findOneAndUpdate(
                     { upload_id: uploadId },
@@ -17,8 +17,9 @@ const webhook = async (req, res) => {
         }
 
         if (type === 'video.asset.ready') {
-            const assetId = data?.id;
-            const playbackId = Array.isArray(data?.playback_ids) && data.playback_ids.length > 0 ? data.playback_ids[0].id : undefined;
+            const assetId = typeof data?.id === 'string' ? data.id : null;
+            const first = Array.isArray(data?.playback_ids) && data.playback_ids.length > 0 ? data.playback_ids[0].id : undefined;
+            const playbackId = typeof first === 'string' ? first : null;
             if (assetId && playbackId) {
                 await Video.findOneAndUpdate(
                     { asset_id: assetId },
