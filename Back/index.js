@@ -37,6 +37,7 @@ const notificationsRoutes = require('./routes/notifications');
 const reportsRoutes = require('./routes/reports');
 const adminRoutes = require('./routes/admin');
 const searchRoutes = require('./routes/search');
+const viewsRoutes = require('./routes/views');
 app.use(base_route + '/profiles', profileRoutes);
 app.use(base_route + '/uploads', uploadsRoutes);
 app.use(base_route + '/videos', videosRoutes);
@@ -49,6 +50,7 @@ app.use(base_route + '/notifications', notificationsRoutes);
 app.use(base_route + '/reports', reportsRoutes);
 app.use(base_route + '/admin', adminRoutes);
 app.use(base_route + '/search', searchRoutes);
+app.use(base_route + '/views', viewsRoutes);
 
 process
     .setMaxListeners(0)
