@@ -1,5 +1,6 @@
 const Follow = require('../models/Follow');
 const Profile = require('../models/Profile');
+const Notification = require('../models/Notification');
 const { createNotification } = require('./notifications');
 
 const toggle = async (req, res) => {
@@ -12,20 +13,23 @@ const toggle = async (req, res) => {
         if (existing) {
             await Follow.deleteOne({ _id: existing._id });
 
-            const me = await Profile.findOne({ id: req.user.id });
-            const you = await Profile.findOne({ id: targetId });
-            if (me) { me.following = Math.max(0, (typeof me.following === 'number' ? me.following : 0) - 1); await me.save(); }
-            if (you) { you.followers = Math.max(0, (typeof you.followers === 'number' ? you.followers : 0) - 1); await you.save(); }
+            await Profile.updateOne({ id: req.user.id, following: { $gt: 0 } }, { $inc: { following: -1 } });
+            await Profile.updateOne({ id: targetId, followers: { $gt: 0 } }, { $inc: { followers: -1 } });
+
+            await Notification.deleteOne({ userId: targetId, actorId: req.user.id, type: 'follow' });
 
             return res.status(200).json({ following: false });
         }
 
-        await new Follow({ followerId: req.user.id, userId: targetId }).save();
+        try {
+            await new Follow({ followerId: req.user.id, userId: targetId }).save();
+        } catch (e) {
+            if (e && e.code === 11000) return res.status(200).json({ following: true });
+            throw e;
+        }
 
-        const me = await Profile.findOne({ id: req.user.id });
-        const you = await Profile.findOne({ id: targetId });
-        if (me) { me.following = (typeof me.following === 'number' ? me.following : 0) + 1; await me.save(); }
-        if (you) { you.followers = (typeof you.followers === 'number' ? you.followers : 0) + 1; await you.save(); }
+        await Profile.updateOne({ id: req.user.id }, { $inc: { following: 1 } });
+        await Profile.updateOne({ id: targetId }, { $inc: { followers: 1 } });
 
         await createNotification({ userId: targetId, actorId: req.user.id, type: 'follow' });
 
