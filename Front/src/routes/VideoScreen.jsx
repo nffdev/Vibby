@@ -364,9 +364,11 @@ export default function VideoScreen() {
     }
   }, [manageScroll])
 
+  const activeVideoId = videos[currentVideoIndex]?.id
+
   useEffect(() => {
-    const id = videos[currentVideoIndex]?.id
-    if (!id) return
+    if (!activeVideoId) return
+    const id = activeVideoId
     ;(async () => {
       try {
         const r = await fetch(`${BASE_API}/v${API_VERSION}/comments/counts?ids=${encodeURIComponent(id)}`)
@@ -387,7 +389,7 @@ export default function VideoScreen() {
         } catch {}
       }
     })()
-  }, [currentVideoIndex, videos])
+  }, [activeVideoId])
 
   return (
     <div className="vibby-landing relative h-screen w-full overflow-hidden bg-[#07070a] text-white antialiased selection:bg-fuchsia-500/30">
