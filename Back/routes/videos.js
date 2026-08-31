@@ -3,9 +3,10 @@ const router = Router();
 
 const { createVideo, listVideos, resolveVideo, listMyVideos, listUserVideos, deleteVideo } = require('../controllers/videos');
 const authMiddleware = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 
 router.post('/', authMiddleware, createVideo);
-router.get('/', listVideos);
+router.get('/', optionalAuth, listVideos);
 router.get('/:id/resolve', resolveVideo);
 router.get('/me', authMiddleware, listMyVideos);
 router.get('/user/:id', listUserVideos);

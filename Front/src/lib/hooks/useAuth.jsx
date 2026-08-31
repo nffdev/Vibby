@@ -64,7 +64,7 @@ export function AuthWrapper({ children }) {
 	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/videoscreen');
 
 	if (onboarding) return <>{children}</>;
-	if (!['/profile', '/upload', '/videoscreen', '/settings', '/admin'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
+	if (!['/profile', '/upload', '/settings', '/admin'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
 	if (user && user.id) return <>{children}</>;
 	if (!auth) return <Login />;
 

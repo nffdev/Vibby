@@ -46,6 +46,8 @@ const create = async (req, res) => {
         const p = await Profile.findOne({ id: req.user.id });
         if (p) { json.username = p.username; json.name = p.name; json.avatar = p.avatar; }
 
+        await Video.updateOne({ id: videoId }, { $inc: { commentCount: 1 } });
+
         const video = await Video.findOne({ id: videoId });
         if (video) await createNotification({ userId: video.userId, actorId: req.user.id, type: 'comment', videoId });
 
@@ -88,6 +90,9 @@ const remove = async (req, res) => {
         }
         if (!isCommentOwner && !isVideoOwner) return res.status(403).json({ message: 'Forbidden.' });
         await Comment.deleteOne({ _id: comment._id });
+        if (comment.videoId) {
+            await Video.updateOne({ id: String(comment.videoId), commentCount: { $gt: 0 } }, { $inc: { commentCount: -1 } });
+        }
         return res.status(200).json({ deleted: true });
     } catch {
         return res.status(500).json({ message: 'Server error.' });

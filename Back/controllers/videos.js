@@ -2,6 +2,14 @@ const crypto = require('node:crypto');
 const Video = require('../models/Video');
 const fetch = require('node-fetch').default;
 const Profile = require('../models/Profile');
+const Follow = require('../models/Follow');
+const View = require('../models/View');
+const {
+    LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, VIEW_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, VIEWED_PENALTY,
+    MAX_FOLLOWED, MAX_VIEWED, ANON_JITTER,
+    encodeCursor, decodeCursor,
+} = require('../utils/feedRanking');
+const { publicVideoProjection, toPublicVideo } = require('../utils/publicVideo');
 
 const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
 const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
@@ -30,20 +38,107 @@ const createVideo = async (req, res) => {
 };
 
 const listVideos = async (req, res) => {
-    const videos = await Video.find({}).sort({ createdAt: -1 }).limit(50);
+    try {
+        const limit = Math.min(20, Math.max(1, parseInt(req.query.limit, 10) || 6));
+        const cursor = req.query.cursor ? decodeCursor(req.query.cursor) : null;
 
-    const userIds = [...new Set(videos.map(v => v.userId).filter(Boolean))];
-    const profiles = userIds.length ? await Profile.find({ id: { $in: userIds } }) : [];
-    const usernameById = new Map(profiles.map(p => [p.id, p.username]));
+        const nowMs = cursor ? cursor.ts : Date.now();
 
-    const final = videos.map(v => {
-        const json = v.toJSON();
-        delete json._id; delete json.__v;
-        json.username = usernameById.get(json.userId);
-        return json;
-    });
+        let followedIds = [];
+        let viewedIds = [];
+        if (req.user) {
+            const [follows, views] = await Promise.all([
+                Follow.find({ followerId: req.user.id }).select('userId').limit(MAX_FOLLOWED),
+                View.find({ userId: req.user.id }).select('videoId').limit(MAX_VIEWED),
+            ]);
+            followedIds = follows.map(f => f.userId).filter(Boolean);
+            viewedIds = views.map(v => v.videoId).filter(Boolean);
+        }
 
-    return res.status(200).json(final);
+        const anon = !req.user;
+        const seed = anon ? (cursor && typeof cursor.seed === 'number' ? cursor.seed : Math.floor(Math.random() * 1e9) + 1) : 0;
+
+        // score = (BASE_FLOOR + LIKE_WEIGHT*ln(1+likes) + COMMENT_WEIGHT*ln(1+comments))
+        //         * exp(-LAMBDA * ageHours) * (isFollowed ? FOLLOW_BOOST : 1)
+        const scoreExpr = {
+            $let: {
+                vars: {
+                    recency: {
+                        $exp: {
+                            $multiply: [
+                                -LAMBDA,
+                                { $divide: [{ $subtract: [nowMs, { $toLong: '$createdAt' }] }, 3600000] },
+                            ],
+                        },
+                    },
+                    engagement: {
+                        $add: [
+                            BASE_FLOOR,
+                            { $multiply: [LIKE_WEIGHT, { $ln: { $add: [1, { $ifNull: ['$likes', 0] }] } }] },
+                            { $multiply: [COMMENT_WEIGHT, { $ln: { $add: [1, { $ifNull: ['$commentCount', 0] }] } }] },
+                            { $multiply: [VIEW_WEIGHT, { $ln: { $add: [1, { $ifNull: ['$viewCount', 0] }] } }] },
+                        ],
+                    },
+                    boost: { $cond: [{ $in: ['$userId', followedIds] }, FOLLOW_BOOST, 1] },
+                    seenPenalty: { $cond: [{ $in: ['$id', viewedIds] }, VIEWED_PENALTY, 1] },
+                    jitter: seed === 0 ? 1 : {
+                        $let: {
+                            vars: {
+                                h: { $mod: [{ $multiply: [{ $toLong: '$createdAt' }, seed] }, 1000] },
+                            },
+                            // map 0..999 -> [1 - ANON_JITTER/2, 1 + ANON_JITTER/2]
+                            in: { $add: [{ $subtract: [1, { $divide: [ANON_JITTER, 2] }] }, { $multiply: [{ $divide: ['$$h', 999] }, ANON_JITTER] }] },
+                        },
+                    },
+                },
+                in: { $multiply: [{ $multiply: [{ $multiply: [{ $multiply: ['$$engagement', '$$recency'] }, '$$boost'] }, '$$seenPenalty'] }, '$$jitter'] },
+            },
+        };
+
+        const pipeline = [
+            { $match: { playback_id: { $exists: true, $ne: null }, status: 'ready' } },
+            { $addFields: { score: scoreExpr } },
+        ];
+
+        if (cursor) {
+            pipeline.push({
+                $match: {
+                    $or: [
+                        { score: { $lt: cursor.score } },
+                        { score: cursor.score, id: { $gt: cursor.id } },
+                    ],
+                },
+            });
+        }
+
+        pipeline.push(
+            { $sort: { score: -1, id: 1 } },
+            { $limit: limit + 1 },
+            { $project: publicVideoProjection(['commentCount', 'score']) },
+        );
+
+        const rows = await Video.aggregate(pipeline);
+
+        const hasMore = rows.length > limit;
+        const items = hasMore ? rows.slice(0, limit) : rows;
+
+        const userIds = [...new Set(items.map(v => v.userId).filter(Boolean))];
+        const profiles = userIds.length ? await Profile.find({ id: { $in: userIds } }) : [];
+        const usernameById = new Map(profiles.map(p => [p.id, p.username]));
+        items.forEach(v => { v.username = usernameById.get(v.userId); });
+
+        let nextCursor = null;
+        if (hasMore) {
+            const last = items[items.length - 1];
+            const payload = { ts: nowMs, score: last.score, id: last.id };
+            if (anon) payload.seed = seed;
+            nextCursor = encodeCursor(payload);
+        }
+
+        return res.status(200).json({ items, nextCursor });
+    } catch {
+        return res.status(500).json({ message: 'Server error.' });
+    }
 };
 
 const resolveVideo = async (req, res) => {
@@ -52,9 +147,7 @@ const resolveVideo = async (req, res) => {
     if (!video) return res.status(404).json({ message: 'Video not found.' });
 
     if (video.playback_id) {
-        const json = video.toJSON();
-        delete json._id; delete json.__v;
-        return res.status(200).json(json);
+        return res.status(200).json(toPublicVideo(video));
     }
 
     try {
@@ -88,8 +181,7 @@ const resolveVideo = async (req, res) => {
         }
 
         await video.save();
-        const final = video.toJSON(); delete final._id; delete final.__v;
-        return res.status(200).json(final);
+        return res.status(200).json(toPublicVideo(video));
     } catch (err) {
         return res.status(500).json({ message: 'Resolve error.' });
     }
@@ -144,8 +236,7 @@ const listUserVideos = async (req, res) => {
     const authHeader = (MUX_TOKEN_ID && MUX_TOKEN_SECRET) ? { 'Authorization': `Basic ${Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString('base64')}` } : null;
 
     const enriched = await Promise.all(videos.map(async v => {
-        const json = v.toJSON();
-        delete json._id; delete json.__v;
+        const json = toPublicVideo(v);
         json.username = username;
         json.views = 0;
         try {

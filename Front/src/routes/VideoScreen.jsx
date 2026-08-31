@@ -10,12 +10,13 @@ import ActionButton from '@/components/video/ActionButton'
 import SearchPopover from '@/components/video/SearchPopover'
 import CommentsOverlay from '@/components/video/CommentsOverlay'
 import ShareOverlay from '@/components/video/ShareOverlay'
+import LoginPromptDialog from '@/components/auth/LoginPromptDialog'
 import { toast } from 'sonner'
 import { resolvePlaybackIds } from "@/lib/utils"
 import { BASE_API, API_VERSION } from "../config.json"
 import MuxPlayer from '@mux/mux-player-react'
 
-function VideoPlayer({ video, muted, onInteraction, onDeleted }) {
+function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const playerRef = useRef(null)
@@ -27,6 +28,7 @@ function VideoPlayer({ video, muted, onInteraction, onDeleted }) {
   const [progress, setProgress] = useState(0)
 
   const manageLike = useCallback(() => {
+    if (requireAuth && !requireAuth()) return
     setLiked((prev) => {
       setShowThumb(!prev)
       setLikes((n) => n + (prev ? -1 : 1))
@@ -51,7 +53,7 @@ function VideoPlayer({ video, muted, onInteraction, onDeleted }) {
       }
     }
     sendLike()
-  }, [video.id, onInteraction])
+  }, [video.id, onInteraction, requireAuth])
 
   useEffect(() => {
     setLiked(!!video.liked)
@@ -226,65 +228,99 @@ function VideoPlayer({ video, muted, onInteraction, onDeleted }) {
 
 export default function VideoScreen() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
   const [showComments, setShowComments] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [muted, setMuted] = useState(true)
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const promptedRef = useRef(false)
+
+  const requireAuth = useCallback(() => {
+    if (user) return true
+    if (!promptedRef.current) {
+      promptedRef.current = true
+      setShowLoginPrompt(true)
+    } else {
+      setShowLoginPrompt(true)
+    }
+    return false
+  }, [user])
   const containerRef = useRef(null)
   const [videos, setVideos] = useState([])
   const [error, setError] = useState('')
+  const cursorRef = useRef(null)
+  const loadingRef = useRef(false)
+  const reachedEndRef = useRef(false)
+  const likedSetRef = useRef(null)
 
-  useEffect(() => {
-    const load = async () => {
-      setError('')
-      try {
-        const response = await fetch(`${BASE_API}/v${API_VERSION}/videos`)
-        const json = await response.json()
-        if (!response.ok) {
-          setError(json.message || 'Impossible to fetch videos.')
-          return
-        }
+  const loadPage = useCallback(async () => {
+    if (loadingRef.current || reachedEndRef.current) return
+    loadingRef.current = true
+    try {
+      const token = localStorage.getItem('token')
 
-        const mapped = json.map(v => ({
-          id: v.id,
-          playback_id: v.playback_id,
-          title: v.title,
-          description: v.description,
-          userId: v.userId,
-          username: v.username,
-          likes: typeof v.likes === 'number' ? v.likes : 0,
-          comments: 0,
-          liked: false
-        }))
-        setVideos(mapped)
-
-        const token = localStorage.getItem('token')
+      if (likedSetRef.current === null) {
+        likedSetRef.current = new Set()
         if (token) {
           try {
             const rLikes = await fetch(`${BASE_API}/v${API_VERSION}/likes/me`, { headers: { 'Authorization': token } })
             const jLikes = await rLikes.json()
-            const likedIds = (rLikes.ok && Array.isArray(jLikes)) ? new Set(jLikes.map(v => v.id)) : new Set()
-            setVideos(prev => prev.map(v => ({
-              ...v,
-              liked: likedIds.has(v.id)
-            })))
+            if (rLikes.ok && Array.isArray(jLikes)) likedSetRef.current = new Set(jLikes.map(v => v.id))
           } catch {}
         }
-
-        const resolved = await resolvePlaybackIds(mapped)
-        if (resolved !== mapped) setVideos(resolved)
-      } catch {
-        setError('Network error to load videos.')
       }
+
+      const params = new URLSearchParams({ limit: '6' })
+      if (cursorRef.current) params.set('cursor', cursorRef.current)
+      const headers = token ? { 'Authorization': token } : undefined
+      const response = await fetch(`${BASE_API}/v${API_VERSION}/videos?${params}`, { headers })
+      const json = await response.json()
+      if (!response.ok) {
+        setError(json.message || 'Impossible to fetch videos.')
+        return
+      }
+
+      const items = Array.isArray(json.items) ? json.items : []
+      cursorRef.current = json.nextCursor || null
+      if (!json.nextCursor) reachedEndRef.current = true
+
+      const mapped = items.map(v => ({
+        id: v.id,
+        playback_id: v.playback_id,
+        title: v.title,
+        description: v.description,
+        userId: v.userId,
+        username: v.username,
+        likes: typeof v.likes === 'number' ? v.likes : 0,
+        comments: typeof v.commentCount === 'number' ? v.commentCount : 0,
+        liked: likedSetRef.current.has(v.id),
+      }))
+
+      const resolved = await resolvePlaybackIds(mapped)
+      const page = resolved !== mapped ? resolved : mapped
+
+      setVideos(prev => {
+        const seen = new Set(prev.map(v => v.id))
+        return [...prev, ...page.filter(v => !seen.has(v.id))]
+      })
+    } catch {
+      setError('Network error to load videos.')
+    } finally {
+      loadingRef.current = false
     }
-    load()
   }, [])
+
+  useEffect(() => {
+    loadPage()
+  }, [loadPage])
 
   const hasVideos = videos && videos.length > 0
 
   const manageInteraction = useCallback((type, videoId, payload) => {
     if (type === 'comment') {
+      if (!requireAuth()) return
       setShowComments(true)
     } else if (type === 'share') {
       setShareUrl(`${window.location.origin}/video/${videoId}`)
@@ -292,7 +328,7 @@ export default function VideoScreen() {
     } else if (type === 'like_state') {
       setVideos(prev => prev.map(v => v.id === videoId ? { ...v, liked: !!(payload && payload.liked) } : v))
     }
-  }, [])
+  }, [requireAuth])
 
   const manageScroll = useCallback(() => {
     const container = containerRef.current
@@ -305,7 +341,16 @@ export default function VideoScreen() {
     if (newIndex !== currentVideoIndex) {
       setCurrentVideoIndex(newIndex)
     }
-  }, [currentVideoIndex])
+
+    if (newIndex >= videos.length - 2) {
+      loadPage()
+    }
+
+    if (!user && !promptedRef.current && newIndex >= 4) {
+      promptedRef.current = true
+      setShowLoginPrompt(true)
+    }
+  }, [currentVideoIndex, videos.length, loadPage, user])
 
   useEffect(() => {
     const container = containerRef.current
@@ -331,6 +376,16 @@ export default function VideoScreen() {
           setVideos(prev => prev.map(v => v.id === id ? { ...v, comments: n } : v))
         }
       } catch {}
+
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          await fetch(`${BASE_API}/v${API_VERSION}/views/${id}`, {
+            method: 'POST',
+            headers: { 'Authorization': token },
+          })
+        } catch {}
+      }
     })()
   }, [currentVideoIndex, videos])
 
@@ -435,6 +490,7 @@ export default function VideoScreen() {
             <VideoPlayer
               video={video}
               muted={muted}
+              requireAuth={requireAuth}
               onInteraction={manageInteraction}
               onDeleted={(id) => setVideos(prev => prev.filter(v => v.id !== id))}
             />
@@ -462,6 +518,8 @@ export default function VideoScreen() {
           </div>
         )}
       </div>
+
+      <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
 
       <BottomNav />
     </div>
