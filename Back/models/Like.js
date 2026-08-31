@@ -6,6 +6,6 @@ const likeSchema = new Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-likeSchema.index({ userId: 1, videoId: 1 });
+likeSchema.index({ userId: 1, videoId: 1 }, { unique: true });
 
 module.exports = model('like', likeSchema);

@@ -1,5 +1,6 @@
 const Like = require('../models/Like');
 const Video = require('../models/Video');
+const Notification = require('../models/Notification');
 const { computeMuxViewsForVideo } = require('./videos');
 const { createNotification } = require('./notifications');
 
@@ -14,15 +15,31 @@ const toggle = async (req, res) => {
         const existing = await Like.findOne({ userId: req.user.id, videoId });
         if (existing) {
             await Like.deleteOne({ _id: existing._id });
-            video.likes = Math.max(0, (typeof video.likes === 'number' ? video.likes : 0) - 1);
-            await video.save();
-            return res.status(200).json({ liked: false, likes: video.likes });
+            const updated = await Video.findOneAndUpdate(
+                { id: videoId, likes: { $gt: 0 } },
+                { $inc: { likes: -1 } },
+                { new: true }
+            );
+            const likes = updated ? updated.likes : (video.likes || 0);
+            await Notification.deleteOne({ userId: video.userId, actorId: req.user.id, type: 'like', videoId });
+            return res.status(200).json({ liked: false, likes });
         }
-        await new Like({ userId: req.user.id, videoId }).save();
-        video.likes = (typeof video.likes === 'number' ? video.likes : 0) + 1;
-        await video.save();
+
+        try {
+            await new Like({ userId: req.user.id, videoId }).save();
+        } catch (e) {
+            if (e && e.code === 11000) {
+                return res.status(200).json({ liked: true, likes: video.likes || 0 });
+            }
+            throw e;
+        }
+        const updated = await Video.findOneAndUpdate(
+            { id: videoId },
+            { $inc: { likes: 1 } },
+            { new: true }
+        );
         await createNotification({ userId: video.userId, actorId: req.user.id, type: 'like', videoId });
-        return res.status(200).json({ liked: true, likes: video.likes });
+        return res.status(200).json({ liked: true, likes: updated ? updated.likes : (video.likes || 0) + 1 });
     } catch {
         return res.status(500).json({ message: 'Server error.' });
     }
