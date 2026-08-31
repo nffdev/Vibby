@@ -8,7 +8,10 @@ const app = express();
 
 app.disable('x-powered-by');
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json({ limit: '5mb' }));
+app.use((req, res, next) => {
+    if (req.originalUrl.endsWith('/mux/webhook')) return next();
+    return bodyParser.json({ limit: '5mb' })(req, res, next);
+});
 
 app.use(cors({
     origin: ['http://localhost:5173', 'http://192.168.1.80:5173'],
