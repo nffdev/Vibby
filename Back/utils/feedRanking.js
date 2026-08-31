@@ -4,7 +4,9 @@ const LIKE_WEIGHT = 1.0;
 const COMMENT_WEIGHT = 1.5;
 const BASE_FLOOR = 1.0; 
 const FOLLOW_BOOST = 3.0; 
+const VIEWED_PENALTY = 0.1; 
 const MAX_FOLLOWED = 2000; 
+const MAX_VIEWED = 5000; 
 
 function encodeCursor(cursor) {
     return Buffer.from(JSON.stringify(cursor)).toString('base64url');
@@ -28,7 +30,9 @@ module.exports = {
     COMMENT_WEIGHT,
     BASE_FLOOR,
     FOLLOW_BOOST,
+    VIEWED_PENALTY,
     MAX_FOLLOWED,
+    MAX_VIEWED,
     encodeCursor,
     decodeCursor,
 };

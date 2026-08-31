@@ -3,8 +3,9 @@ const Video = require('../models/Video');
 const fetch = require('node-fetch').default;
 const Profile = require('../models/Profile');
 const Follow = require('../models/Follow');
+const View = require('../models/View');
 const {
-    LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, MAX_FOLLOWED,
+    LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, VIEWED_PENALTY, MAX_FOLLOWED, MAX_VIEWED,
     encodeCursor, decodeCursor,
 } = require('../utils/feedRanking');
 const { publicVideoProjection, toPublicVideo } = require('../utils/publicVideo');
@@ -43,11 +44,14 @@ const listVideos = async (req, res) => {
         const nowMs = cursor ? cursor.ts : Date.now();
 
         let followedIds = [];
+        let viewedIds = [];
         if (req.user) {
-            const follows = await Follow.find({ followerId: req.user.id })
-                .select('userId')
-                .limit(MAX_FOLLOWED);
+            const [follows, views] = await Promise.all([
+                Follow.find({ followerId: req.user.id }).select('userId').limit(MAX_FOLLOWED),
+                View.find({ userId: req.user.id }).select('videoId').limit(MAX_VIEWED),
+            ]);
             followedIds = follows.map(f => f.userId).filter(Boolean);
+            viewedIds = views.map(v => v.videoId).filter(Boolean);
         }
 
         // score = (BASE_FLOOR + LIKE_WEIGHT*ln(1+likes) + COMMENT_WEIGHT*ln(1+comments))
@@ -71,8 +75,9 @@ const listVideos = async (req, res) => {
                         ],
                     },
                     boost: { $cond: [{ $in: ['$userId', followedIds] }, FOLLOW_BOOST, 1] },
+                    seenPenalty: { $cond: [{ $in: ['$id', viewedIds] }, VIEWED_PENALTY, 1] },
                 },
-                in: { $multiply: [{ $multiply: ['$$engagement', '$$recency'] }, '$$boost'] },
+                in: { $multiply: [{ $multiply: [{ $multiply: ['$$engagement', '$$recency'] }, '$$boost'] }, '$$seenPenalty'] },
             },
         };
 
