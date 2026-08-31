@@ -2,6 +2,7 @@ const HALF_LIFE_HOURS = 36;
 const LAMBDA = Math.log(2) / HALF_LIFE_HOURS;
 const LIKE_WEIGHT = 1.0;
 const COMMENT_WEIGHT = 1.5;
+const VIEW_WEIGHT = 0.3; 
 const BASE_FLOOR = 1.0; 
 const FOLLOW_BOOST = 3.0; 
 const VIEWED_PENALTY = 0.1; 
@@ -28,6 +29,7 @@ module.exports = {
     LAMBDA,
     LIKE_WEIGHT,
     COMMENT_WEIGHT,
+    VIEW_WEIGHT,
     BASE_FLOOR,
     FOLLOW_BOOST,
     VIEWED_PENALTY,

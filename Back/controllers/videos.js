@@ -5,7 +5,7 @@ const Profile = require('../models/Profile');
 const Follow = require('../models/Follow');
 const View = require('../models/View');
 const {
-    LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, VIEWED_PENALTY, MAX_FOLLOWED, MAX_VIEWED,
+    LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, VIEW_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, VIEWED_PENALTY, MAX_FOLLOWED, MAX_VIEWED,
     encodeCursor, decodeCursor,
 } = require('../utils/feedRanking');
 const { publicVideoProjection, toPublicVideo } = require('../utils/publicVideo');
@@ -71,7 +71,8 @@ const listVideos = async (req, res) => {
                         $add: [
                             BASE_FLOOR,
                             { $multiply: [LIKE_WEIGHT, { $ln: { $add: [1, { $ifNull: ['$likes', 0] }] } }] },
-                            { $multiply: [COMMENT_WEIGHT, { $ln: { $add: [1, '$commentCount'] } }] },
+                            { $multiply: [COMMENT_WEIGHT, { $ln: { $add: [1, { $ifNull: ['$commentCount', 0] }] } }] },
+                            { $multiply: [VIEW_WEIGHT, { $ln: { $add: [1, { $ifNull: ['$viewCount', 0] }] } }] },
                         ],
                     },
                     boost: { $cond: [{ $in: ['$userId', followedIds] }, FOLLOW_BOOST, 1] },
@@ -83,18 +84,6 @@ const listVideos = async (req, res) => {
 
         const pipeline = [
             { $match: { playback_id: { $exists: true, $ne: null }, status: 'ready' } },
-            {
-                $lookup: {
-                    from: 'comments',
-                    let: { vid: '$id' },
-                    pipeline: [
-                        { $match: { $expr: { $eq: ['$videoId', '$$vid'] } } },
-                        { $count: 'n' },
-                    ],
-                    as: 'c',
-                },
-            },
-            { $addFields: { commentCount: { $ifNull: [{ $arrayElemAt: ['$c.n', 0] }, 0] } } },
             { $addFields: { score: scoreExpr } },
         ];
 
