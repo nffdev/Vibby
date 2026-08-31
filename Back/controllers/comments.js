@@ -40,6 +40,9 @@ const create = async (req, res) => {
         if (trimmed.length > 300) return res.status(400).json({ message: 'Text must be at most 300 characters long.' });
         if (utils.hasBadWords(trimmed)) return res.status(400).json({ message: 'Text includes a blacklisted word.' });
 
+        const video = await Video.findOne({ id: videoId });
+        if (!video) return res.status(404).json({ message: 'Video not found.' });
+
         const comment = new Comment({ videoId, userId: req.user.id, text: trimmed });
         await comment.save();
         const json = comment.toJSON(); delete json._id; delete json.__v; json.id = String(comment._id);
@@ -48,8 +51,7 @@ const create = async (req, res) => {
 
         await Video.updateOne({ id: videoId }, { $inc: { commentCount: 1 } });
 
-        const video = await Video.findOne({ id: videoId });
-        if (video) await createNotification({ userId: video.userId, actorId: req.user.id, type: 'comment', videoId });
+        await createNotification({ userId: video.userId, actorId: req.user.id, type: 'comment', videoId });
 
         return res.status(201).json(json);
     } catch {
