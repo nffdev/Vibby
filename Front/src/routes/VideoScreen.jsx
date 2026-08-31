@@ -376,6 +376,16 @@ export default function VideoScreen() {
           setVideos(prev => prev.map(v => v.id === id ? { ...v, comments: n } : v))
         }
       } catch {}
+
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          await fetch(`${BASE_API}/v${API_VERSION}/views/${id}`, {
+            method: 'POST',
+            headers: { 'Authorization': token },
+          })
+        } catch {}
+      }
     })()
   }, [currentVideoIndex, videos])
 
