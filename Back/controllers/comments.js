@@ -8,7 +8,7 @@ const listByVideo = async (req, res) => {
     try {
         const videoId = String(req.params.videoId || '').trim();
         if (!videoId) return res.status(400).json({ message: 'Video id is required.' });
-        const comments = await Comment.find({ videoId }).sort({ createdAt: 1 }).limit(500);
+        const comments = await Comment.find({ videoId }).sort({ createdAt: 1, _id: 1 }).limit(500);
         const userIds = [...new Set(comments.map(c => c.userId).filter(Boolean))];
         const profiles = userIds.length ? await Profile.find({ id: { $in: userIds } }) : [];
         const byId = new Map(profiles.map(p => [p.id, p]));
