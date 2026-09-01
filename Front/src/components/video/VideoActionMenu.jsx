@@ -53,7 +53,7 @@ export default function VideoActionMenu({ videoId, isOwner, onDeleted, triggerCl
               className="justify-start rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 hover:text-white"
               text={`${window.location.origin}/video/${videoId}`}
               onCopied={() => close()}
-              successMessage="Link copied"
+              successMessage="Lien copié"
             >
               Partager
             </CopyButton>

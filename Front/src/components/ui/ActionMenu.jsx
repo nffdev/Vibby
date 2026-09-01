@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { MoreVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,6 +10,7 @@ export default function ActionMenu({
   children
 }) {
   const [open, setOpen] = useState(false)
+  const containerRef = useRef(null)
 
   const toggle = (e) => {
     if (stopPropagation && e && typeof e.stopPropagation === 'function') e.stopPropagation()
@@ -18,8 +19,22 @@ export default function ActionMenu({
 
   const close = () => setOpen(false)
 
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) close()
+    }
+    const onKeyDown = (e) => { if (e.key === 'Escape') close() }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <Button
         variant="ghost"
         size={null}
