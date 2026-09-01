@@ -236,7 +236,9 @@ const listMyVideos = async (req, res) => {
                     if (count) json.views = count;
                 }
             }
-        } catch {}
+        } catch (err) {
+            console.warn('Mux view enrichment failed:', err.message);
+        }
         return json;
     }));
 
@@ -276,7 +278,9 @@ const listUserVideos = async (req, res) => {
                     if (count) json.views = count;
                 }
             }
-        } catch {}
+        } catch (err) {
+            console.warn('Mux view enrichment failed:', err.message);
+        }
         return json;
     }));
 
@@ -293,7 +297,9 @@ const removeVideo = async (video) => {
                 await fetch(`https://api.mux.com/video/v1/uploads/${video.upload_id}`, { method: 'DELETE', headers: auth });
             }
         }
-    } catch {}
+    } catch (err) {
+        console.warn('Mux asset cleanup failed:', err.message);
+    }
     await Video.deleteOne({ id: video.id });
 };
 

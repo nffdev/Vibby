@@ -25,7 +25,9 @@ async function createNotification({ userId, actorId, type, videoId }) {
             type,
             videoId,
         }).save();
-    } catch { }
+    } catch (err) {
+        console.warn('createNotification failed:', err.message);
+    }
 }
 
 const listMine = async (req, res) => {
