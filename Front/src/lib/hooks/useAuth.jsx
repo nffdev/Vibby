@@ -54,17 +54,20 @@ export function AuthWrapper({ children }) {
 		getUser();
 	}, [location]);
 
-	if (isBanned) {
-		if (window.location.pathname !== '/banned') return window.location.replace('/banned');
-		return <Banned />;
-	}
+	const path = window.location.pathname;
 
-	if (window.location.pathname === '/banned') return window.location.replace('/');
+	useEffect(() => {
+		if (isBanned && path !== '/banned') { window.location.replace('/banned'); return; }
+		if (!isBanned && path === '/banned') { window.location.replace('/'); return; }
+		if (path.startsWith('/auth') && auth) { window.location.replace('/videoscreen'); }
+	}, [isBanned, path, auth]);
 
-	if (window.location.pathname.startsWith('/auth') && auth) return window.location.replace('/videoscreen');
+	if (isBanned) return path === '/banned' ? <Banned /> : <Loader2 className="animate-spin" />;
+	if (path === '/banned') return <Loader2 className="animate-spin" />;
+	if (path.startsWith('/auth') && auth) return <Loader2 className="animate-spin" />;
 
 	if (onboarding) return <>{children}</>;
-	if (!['/profile', '/upload', '/settings', '/admin'].some(path => window.location.pathname.startsWith(path))) return <>{children}</>;
+	if (!['/profile', '/upload', '/settings', '/admin'].some(p => path.startsWith(p))) return <>{children}</>;
 	if (user && user.id) return <>{children}</>;
 	if (!auth) return <Login />;
 

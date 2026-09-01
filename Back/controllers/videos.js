@@ -91,7 +91,12 @@ const listVideos = async (req, res) => {
                         },
                     },
                 },
-                in: { $multiply: [{ $multiply: [{ $multiply: [{ $multiply: ['$$engagement', '$$recency'] }, '$$boost'] }, '$$seenPenalty'] }, '$$jitter'] },
+                in: {
+                    $round: [
+                        { $multiply: [{ $multiply: [{ $multiply: [{ $multiply: ['$$engagement', '$$recency'] }, '$$boost'] }, '$$seenPenalty'] }, '$$jitter'] },
+                        6,
+                    ],
+                },
             },
         };
 
