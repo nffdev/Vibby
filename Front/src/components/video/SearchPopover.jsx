@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -6,41 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Search, Loader2, Play, User } from 'lucide-react'
-import { BASE_API, API_VERSION } from '../../config.json'
-
-const SEARCH_DEBOUNCE_MS = 350 
-const SEARCH_MIN_CHARS = 2 
+import { useSearch, SEARCH_MIN_CHARS } from '@/lib/hooks/useSearch'
 
 export default function SearchPopover() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const [q, setQ] = useState('')
-  const [results, setResults] = useState({ videos: [], users: [] })
-  const [loading, setLoading] = useState(false)
-  const reqId = useRef(0)
-
-  useEffect(() => {
-    const query = q.trim()
-    if (query.length < SEARCH_MIN_CHARS) {
-      setResults({ videos: [], users: [] })
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    const id = ++reqId.current
-    const timer = setTimeout(async () => {
-      try {
-        const r = await fetch(`${BASE_API}/v${API_VERSION}/search?q=${encodeURIComponent(query)}`)
-        const j = await r.json()
-        if (id !== reqId.current) return
-        if (r.ok) setResults({ videos: j.videos || [], users: j.users || [] })
-      } catch {}
-      if (id === reqId.current) setLoading(false)
-    }, SEARCH_DEBOUNCE_MS)
-
-    return () => clearTimeout(timer)
-  }, [q])
+  const { q, setQ, results, loading } = useSearch()
 
   const go = (path) => {
     setOpen(false)
@@ -102,8 +73,8 @@ export default function SearchPopover() {
               <div className="flex items-center justify-center gap-2 py-10 text-sm text-white/40">
                 <Loader2 className="h-4 w-4 animate-spin" /> Recherche...
               </div>
-            ) : q.trim().length < 2 ? (
-              <p className="py-10 text-center text-sm text-white/30">Tape au moins 2 caractères.</p>
+            ) : q.trim().length < SEARCH_MIN_CHARS ? (
+              <p className="py-10 text-center text-sm text-white/30">Tape au moins {SEARCH_MIN_CHARS} caractères.</p>
             ) : (
               <>
                 <TabsContent value="videos" className="mt-0 space-y-1">

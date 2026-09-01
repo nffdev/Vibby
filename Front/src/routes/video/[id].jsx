@@ -9,8 +9,8 @@ import VideoActionMenu from '@/components/video/VideoActionMenu'
 import ActionButton from '@/components/video/ActionButton'
 import CommentsOverlay from '@/components/video/CommentsOverlay'
 import ShareOverlay from '@/components/video/ShareOverlay'
-import { toast } from 'sonner'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useVideoLike } from '@/lib/hooks/useVideoLike'
 import { BASE_API, API_VERSION } from '../../config.json'
 
 export default function VideoWatch() {
@@ -22,13 +22,12 @@ export default function VideoWatch() {
   const [progress, setProgress] = useState(0)
   const [paused, setPaused] = useState(false)
   const playerRef = useRef(null)
-  const [liked, setLiked] = useState(false)
-  const [likes, setLikes] = useState(0)
   const [commentCount, setCommentCount] = useState(0)
-  const [showThumb, setShowThumb] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const { user } = useAuth()
+
+  const { liked, likes, showThumb, toggleLike } = useVideoLike(video)
 
   useEffect(() => {
     const load = async () => {
@@ -43,7 +42,6 @@ export default function VideoWatch() {
         }
 
         setVideo(j)
-        setLikes(j.likes || 0)
 
         if (j.userId && !j.username) {
           try {
@@ -58,7 +56,8 @@ export default function VideoWatch() {
           try {
             const rLikes = await fetch(`${BASE_API}/v${API_VERSION}/likes/me`, { headers: { 'Authorization': token } })
             const jLikes = await rLikes.json()
-            setLiked(rLikes.ok && Array.isArray(jLikes) && jLikes.some(v => v.id === j.id))
+            const isLiked = rLikes.ok && Array.isArray(jLikes) && jLikes.some(v => v.id === j.id)
+            setVideo(prev => (prev && prev.id === j.id ? { ...prev, liked: isLiked } : prev))
           } catch {}
         }
 
@@ -75,38 +74,6 @@ export default function VideoWatch() {
     }
     load()
   }, [id])
-
-  useEffect(() => {
-    if (!showThumb) return
-    const timer = setTimeout(() => setShowThumb(false), 1000)
-    return () => clearTimeout(timer)
-  }, [showThumb])
-
-  const manageLike = useCallback(async () => {
-    if (!video) return
-
-    setLiked((prev) => {
-      setShowThumb(!prev)
-      setLikes((n) => n + (prev ? -1 : 1))
-      return !prev
-    })
-
-    try {
-      const r = await fetch(`${BASE_API}/v${API_VERSION}/likes/${video.id}`, {
-        method: 'POST',
-        headers: { 'Authorization': localStorage.getItem('token') }
-      })
-      const j = await r.json()
-      if (!r.ok) {
-        toast.error(j.message || 'Le like a échoué')
-        return
-      }
-      if (typeof j.likes === 'number') setLikes(j.likes)
-      toast.success(j.liked ? 'Ajouté aux likes' : 'Retiré des likes')
-    } catch {
-      toast.error('Erreur réseau')
-    }
-  }, [video])
 
   const togglePlay = useCallback(() => {
     const player = playerRef.current
@@ -290,7 +257,7 @@ export default function VideoWatch() {
               <ActionButton
                 icon={ThumbsUp}
                 label={likes.toLocaleString()}
-                onClick={manageLike}
+                onClick={toggleLike}
                 active={liked}
                 activeClassName="border-transparent bg-gradient-to-br from-violet-500 to-fuchsia-500"
                 fill={liked}

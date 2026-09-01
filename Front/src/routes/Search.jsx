@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
@@ -7,44 +7,17 @@ import { Button } from '@/components/ui/button'
 import VideoGrid from '@/components/video/VideoGrid'
 import BottomNav from '@/components/nav/BottomNav'
 import { ArrowLeft, Search as SearchIcon, Loader2, User, Play } from 'lucide-react'
-import { BASE_API, API_VERSION } from '../config.json'
-
-const SEARCH_DEBOUNCE_MS = 350 
-const SEARCH_MIN_CHARS = 2 
+import { useSearch, SEARCH_MIN_CHARS } from '@/lib/hooks/useSearch'
 
 export default function Search() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [q, setQ] = useState(searchParams.get('q') || '')
-  const [results, setResults] = useState({ videos: [], users: [] })
-  const [loading, setLoading] = useState(false)
-  const reqId = useRef(0)
+  const { q, setQ, results, loading } = useSearch(searchParams.get('q') || '')
 
   useEffect(() => {
     const query = q.trim()
-
     setSearchParams(query ? { q: query } : {}, { replace: true })
-
-    if (query.length < SEARCH_MIN_CHARS) {
-      setResults({ videos: [], users: [] })
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    const id = ++reqId.current
-    const timer = setTimeout(async () => {
-      try {
-        const r = await fetch(`${BASE_API}/v${API_VERSION}/search?q=${encodeURIComponent(query)}`)
-        const j = await r.json()
-        if (id !== reqId.current) return
-        if (r.ok) setResults({ videos: j.videos || [], users: j.users || [] })
-      } catch {}
-      if (id === reqId.current) setLoading(false)
-    }, SEARCH_DEBOUNCE_MS)
-
-    return () => clearTimeout(timer)
-  }, [q])
+  }, [q, setSearchParams])
 
   const gridVideos = results.videos.map((v) => ({
     ...v,
@@ -98,8 +71,8 @@ export default function Search() {
             <div className="flex items-center justify-center gap-2 py-20 text-sm text-white/40">
               <Loader2 className="h-4 w-4 animate-spin" /> Recherche...
             </div>
-          ) : q.trim().length < 2 ? (
-            <p className="py-20 text-center text-sm text-white/30">Tape au moins 2 caractères pour lancer la recherche.</p>
+          ) : q.trim().length < SEARCH_MIN_CHARS ? (
+            <p className="py-20 text-center text-sm text-white/30">Tape au moins {SEARCH_MIN_CHARS} caractères pour lancer la recherche.</p>
           ) : (
             <>
               <TabsContent value="videos">

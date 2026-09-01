@@ -13,6 +13,7 @@ import ShareOverlay from '@/components/video/ShareOverlay'
 import LoginPromptDialog from '@/components/auth/LoginPromptDialog'
 import { toast } from 'sonner'
 import { resolvePlaybackIds } from "@/lib/utils"
+import { useVideoLike } from "@/lib/hooks/useVideoLike"
 import { BASE_API, API_VERSION } from "../config.json"
 import MuxPlayer from '@mux/mux-player-react'
 
@@ -25,44 +26,14 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
   const { user } = useAuth()
   const playerRef = useRef(null)
   const [paused, setPaused] = useState(false)
-  const [liked, setLiked] = useState(!!video.liked)
-  const [likes, setLikes] = useState(video.likes)
-  const [showThumb, setShowThumb] = useState(false)
   const [isFollowingAuthor, setIsFollowingAuthor] = useState(false)
   const [progress, setProgress] = useState(0)
 
-  const manageLike = useCallback(() => {
-    if (requireAuth && !requireAuth()) return
-    setLiked((prev) => {
-      setShowThumb(!prev)
-      setLikes((n) => n + (prev ? -1 : 1))
-      return !prev
-    })
-
-    onInteraction('like', video.id)
-
-    const sendLike = async () => {
-      try {
-        const r = await fetch(`${BASE_API}/v${API_VERSION}/likes/${video.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } })
-        const j = await r.json()
-        if (!r.ok) {
-          toast.error(j.message || 'Le like a échoué')
-        } else {
-          if (typeof j.likes === 'number') setLikes(j.likes)
-          toast.success(j.liked ? 'Ajouté aux likes' : 'Retiré des likes')
-          onInteraction('like_state', video.id, { liked: j.liked })
-        }
-      } catch {
-        toast.error('Erreur réseau')
-      }
-    }
-    sendLike()
-  }, [video.id, onInteraction, requireAuth])
-
-  useEffect(() => {
-    setLiked(!!video.liked)
-    setLikes(video.likes)
-  }, [video.liked, video.likes, video.id])
+  const onLikeState = useCallback(
+    (isLiked) => onInteraction('like_state', video.id, { liked: isLiked }),
+    [onInteraction, video.id],
+  )
+  const { liked, likes, showThumb, toggleLike } = useVideoLike(video, { requireAuth, onLikeState })
 
   useEffect(() => {
     const loadRelationship = async () => {
@@ -75,14 +46,6 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
     }
     loadRelationship()
   }, [user, video.userId])
-
-  useEffect(() => {
-    let timer
-    if (showThumb) {
-      timer = setTimeout(() => setShowThumb(false), 1000)
-    }
-    return () => clearTimeout(timer)
-  }, [showThumb])
 
   const isOwner = user?.id && user.id === video.userId
 
@@ -223,7 +186,7 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
         <ActionButton
           icon={ThumbsUp}
           label={likes.toLocaleString()}
-          onClick={manageLike}
+          onClick={toggleLike}
           active={liked}
           activeClassName="border-transparent bg-gradient-to-br from-violet-500 to-fuchsia-500"
           fill={liked}
