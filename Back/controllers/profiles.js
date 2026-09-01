@@ -13,6 +13,17 @@ const allowedInterests = [
     'Art', 'Beauty', 'Education', 'Technology', 'Fitness', 'Lifestyle', 'Nature'
 ];
 
+const AVATAR_MAX_BYTES = 700 * 1024;
+const AVATAR_DATA_URL = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/;
+
+function validateAvatar(avatar) {
+    if (typeof avatar !== 'string') return 'Avatar must be a base64 data URL string.';
+    if (avatar === '') return null;
+    if (!AVATAR_DATA_URL.test(avatar)) return 'Avatar must be a base64-encoded image data URL.';
+    if (Buffer.byteLength(avatar, 'utf8') > AVATAR_MAX_BYTES) return 'Avatar image is too large.';
+    return null;
+}
+
 const getMe = async (req, res) => {
     const profile = await Profile.findOne({ id: req.user.id });
     if (!profile) return res.status(400).json({ error: 'COMPLETE_ONBOARDING', message: 'Onboarding not completed.' });
@@ -48,6 +59,11 @@ const completeOnboarding = async (req, res) => {
     if (name.length < 3 || name.length > 50) return res.status(400).json({ message: 'Full name must be between 3 and 50 characters long.' });
     if (utils.hasBadWords(name)) return res.status(400).json({ message: 'Full name includes a blacklisted word.' });
 
+    if (typeof avatar !== 'undefined') {
+        const avatarError = validateAvatar(avatar);
+        if (avatarError) return res.status(400).json({ message: avatarError });
+    }
+
     const filteredInterests = interests.filter(interest => allowedInterests.includes(interest));
 
     const profile = await Profile.findOne({ id: req.user.id });
@@ -80,7 +96,8 @@ const editMe = async (req, res) => {
         }
 
         if (typeof avatar !== 'undefined') {
-            if (typeof avatar !== 'string') return res.status(400).json({ message: 'Avatar must be a base64 data URL string.' });
+            const avatarError = validateAvatar(avatar);
+            if (avatarError) return res.status(400).json({ message: avatarError });
             updates.avatar = avatar;
         }
 

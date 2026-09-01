@@ -44,7 +44,7 @@ const listFollowers = async (req, res) => {
         const userId = String(req.params.id || '').trim();
         if (!userId) return res.status(400).json({ message: 'User id is required.' });
 
-        const followers = await Follow.find({ userId }).sort({ createdAt: -1 }).limit(200);
+        const followers = await Follow.find({ userId }).sort({ createdAt: -1, _id: -1 }).limit(200);
         const followerIds = followers.map(f => f.followerId);
         const profiles = followerIds.length ? await Profile.find({ id: { $in: followerIds } }) : [];
 
@@ -69,7 +69,7 @@ const listFollowing = async (req, res) => {
         const userId = String(req.params.id || '').trim();
         if (!userId) return res.status(400).json({ message: 'User id is required.' });
 
-        const following = await Follow.find({ followerId: userId }).sort({ createdAt: -1 }).limit(200);
+        const following = await Follow.find({ followerId: userId }).sort({ createdAt: -1, _id: -1 }).limit(200);
         const targetIds = following.map(f => f.userId);
         const profiles = targetIds.length ? await Profile.find({ id: { $in: targetIds } }) : [];
 

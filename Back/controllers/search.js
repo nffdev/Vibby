@@ -16,7 +16,7 @@ const search = async (req, res) => {
             Video.find({
                 playback_id: { $exists: true, $ne: null },
                 $or: [{ title: rx }, { description: rx }],
-            }).sort({ createdAt: -1 }).limit(20),
+            }).sort({ createdAt: -1, _id: -1 }).limit(20),
             Profile.find({ $or: [{ username: rx }, { name: rx }] }).limit(20),
         ]);
 

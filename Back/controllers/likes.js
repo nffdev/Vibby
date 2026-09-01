@@ -47,7 +47,7 @@ const toggle = async (req, res) => {
 
 const listMe = async (req, res) => {
     try {
-        const likes = await Like.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100);
+        const likes = await Like.find({ userId: req.user.id }).sort({ createdAt: -1, _id: -1 }).limit(100);
         const videoIds = likes.map(l => l.videoId);
         const videos = videoIds.length ? await Video.find({ id: { $in: videoIds } }) : [];
         const byId = new Map(videos.map(v => [v.id, v]));
@@ -72,7 +72,7 @@ const listUser = async (req, res) => {
     try {
         const id = String(req.params.id || '').trim();
         if (!id) return res.status(400).json({ message: 'User id is required.' });
-        const likes = await Like.find({ userId: id }).sort({ createdAt: -1 }).limit(100);
+        const likes = await Like.find({ userId: id }).sort({ createdAt: -1, _id: -1 }).limit(100);
         const videoIds = likes.map(l => l.videoId);
         const videos = videoIds.length ? await Video.find({ id: { $in: videoIds } }) : [];
         const byId = new Map(videos.map(v => [v.id, v]));

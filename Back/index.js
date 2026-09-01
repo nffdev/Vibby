@@ -56,6 +56,16 @@ app.use(base_route + '/admin', adminRoutes);
 app.use(base_route + '/search', searchRoutes);
 app.use(base_route + '/views', viewsRoutes);
 
+app.use((req, res) => {
+    res.status(404).json({ message: 'Not found.' });
+});
+
+app.use((err, req, res, next) => {
+    console.error(err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ message: 'Internal server error.' });
+});
+
 process
     .setMaxListeners(0)
     .on("uncaughtException", err => console.error(err))

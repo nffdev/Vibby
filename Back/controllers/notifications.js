@@ -31,7 +31,7 @@ async function createNotification({ userId, actorId, type, videoId }) {
 const listMine = async (req, res) => {
     try {
         const notifications = await Notification.find({ userId: req.user.id })
-            .sort({ createdAt: -1 })
+            .sort({ createdAt: -1, _id: -1 })
             .limit(50);
 
         const actorIds = [...new Set(notifications.map(n => n.actorId).filter(Boolean))];

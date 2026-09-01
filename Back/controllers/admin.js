@@ -9,7 +9,7 @@ const listReports = async (req, res) => {
         const status = String(req.query.status || 'pending').trim();
         const filter = status === 'all' ? {} : { status };
 
-        const reports = await Report.find(filter).sort({ createdAt: -1 }).limit(200);
+        const reports = await Report.find(filter).sort({ createdAt: -1, _id: -1 }).limit(200);
 
         const videoIds = [...new Set(reports.map(r => r.videoId).filter(Boolean))];
         const reporterIds = [...new Set(reports.map(r => r.reporterId).filter(Boolean))];

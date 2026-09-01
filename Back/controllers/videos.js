@@ -155,6 +155,8 @@ const resolveVideo = async (req, res) => {
         return res.status(200).json(toPublicVideo(video));
     }
 
+    if (!req.user) return res.status(401).json({ message: 'Authentication required.' });
+
     try {
         if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) return res.status(500).json({ message: 'MUX credentials missing.' });
 
@@ -193,7 +195,7 @@ const resolveVideo = async (req, res) => {
 };
 
 const listMyVideos = async (req, res) => {
-    const videos = await Video.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100);
+    const videos = await Video.find({ userId: req.user.id }).sort({ createdAt: -1, _id: -1 }).limit(100);
     const profile = await Profile.findOne({ id: req.user.id });
     const username = profile?.username;
 
@@ -234,7 +236,7 @@ const listMyVideos = async (req, res) => {
 const listUserVideos = async (req, res) => {
     const userId = String(req.params.id || '').trim();
     if (!userId) return res.status(400).json({ message: 'User id is required.' });
-    const videos = await Video.find({ userId }).sort({ createdAt: -1 }).limit(100);
+    const videos = await Video.find({ userId }).sort({ createdAt: -1, _id: -1 }).limit(100);
     const profile = await Profile.findOne({ id: userId });
     const username = profile?.username;
 
