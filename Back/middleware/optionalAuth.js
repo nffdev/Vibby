@@ -26,7 +26,9 @@ module.exports = async (req, res, next) => {
         delete json._id;
         delete json.__v;
         req.user = json;
-    } catch { }
+    } catch (err) {
+        console.warn('optionalAuth lookup failed:', err.message);
+    }
 
     next();
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 
 export default function Step2Avatar({ onNext, data }) {

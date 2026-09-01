@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function Step2Name({ onNext, data }) {
   const [name, setName] = useState(data.name);

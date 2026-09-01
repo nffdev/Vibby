@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Loader2, Check } from 'lucide-react';
 import { BASE_API, API_VERSION } from '../../config.json';
 

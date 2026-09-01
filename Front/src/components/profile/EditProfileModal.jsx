@@ -38,16 +38,16 @@ export default function EditProfileModal({ profile, onClose, onUpdated }) {
       })
       const j = await r.json()
       if (!r.ok) {
-        setError(j.message || 'Update failed')
-        toast.error(j.message || 'Update failed')
+        setError(j.message || 'La mise à jour a échoué')
+        toast.error(j.message || 'La mise à jour a échoué')
       } else {
-        toast.success('Profile updated')
+        toast.success('Profil mis à jour')
         onUpdated && onUpdated(j)
         onClose()
       }
     } catch {
-      setError('Network error')
-      toast.error('Network error')
+      setError('Erreur réseau')
+      toast.error('Erreur réseau')
     } finally {
       setSaving(false)
     }

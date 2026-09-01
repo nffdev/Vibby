@@ -30,13 +30,13 @@ export default function ReportDialog({ videoId, open, onClose }) {
       })
       const j = await r.json()
       if (!r.ok) {
-        toast.error(j.message || 'Report failed')
+        toast.error(j.message || 'Le signalement a échoué')
       } else {
         toast.success(j.alreadyReported ? 'Déjà signalée' : 'Signalement envoyé')
         handleClose()
       }
     } catch {
-      toast.error('Network error')
+      toast.error('Erreur réseau')
     }
     setSending(false)
   }

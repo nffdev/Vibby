@@ -116,7 +116,7 @@ export default function Profile() {
         const response = await fetch(url, { headers });
         const json = await response.json();
         if (!response.ok) {
-          setError(json.message || 'Impossible to load videos.');
+          setError(json.message || 'Impossible de charger les vidéos.');
           setVideos([]);
         } else {
           const mapped = await loadAndResolveVideos(json);
@@ -124,7 +124,7 @@ export default function Profile() {
           setTotalLikes(mapped.reduce((acc, v) => acc + (typeof v.likes === 'number' ? v.likes : 0), 0));
         }
       } catch {
-        setError('Network error when loading videos.');
+        setError('Erreur réseau lors du chargement des vidéos.');
         setVideos([]);
       } finally {
         setLoadingVideos(false);
@@ -144,14 +144,14 @@ export default function Profile() {
         const response = await fetch(url, { headers });
         const json = await response.json();
         if (!response.ok) {
-          setLikedError(json.message || 'Impossible to load liked videos.');
+          setLikedError(json.message || 'Impossible de charger les vidéos aimées.');
           setLikedVideos([]);
         } else {
           const mapped = await loadAndResolveVideos(json);
           setLikedVideos(mapped);
         }
       } catch {
-        setLikedError('Network error when loading liked videos.');
+        setLikedError('Erreur réseau lors du chargement des vidéos aimées.');
         setLikedVideos([]);
       } finally {
         setLoadingLiked(false);
@@ -164,10 +164,10 @@ export default function Profile() {
     try {
       const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/${targetId}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } });
       const j = await r.json();
-      if (!r.ok) { toast.error(j.message || 'Action failed'); return null; }
+      if (!r.ok) { toast.error(j.message || 'L\'action a échoué'); return null; }
       return j;
     } catch {
-      toast.error('Network error');
+      toast.error('Erreur réseau');
       return null;
     }
   };

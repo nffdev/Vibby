@@ -13,8 +13,8 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
 
     async function login() {
-        if (!datas.email) return setError("Email is required.");
-        if (!datas.password) return setError("Password is required.");
+        if (!datas.email) return setError("L'email est requis.");
+        if (!datas.password) return setError("Le mot de passe est requis.");
 
         setError("");
         setLoading(true);
@@ -32,9 +32,9 @@ export default function Login() {
                 window.location.replace("/videoscreen");
                 return;
             }
-            setError(json.message || "An error occurred.");
+            setError(json.message || "Une erreur est survenue.");
         } catch {
-            setError("An error occurred.");
+            setError("Une erreur est survenue.");
         }
         setLoading(false);
     }

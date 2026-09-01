@@ -52,9 +52,9 @@ export default function ShareOverlay({ onClose, url }) {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
-      toast.success('Link copied')
+      toast.success('Lien copié')
     } catch {
-      toast.error('Copy failed')
+      toast.error('La copie a échoué')
     }
   }
 

@@ -13,52 +13,27 @@ import ShareOverlay from '@/components/video/ShareOverlay'
 import LoginPromptDialog from '@/components/auth/LoginPromptDialog'
 import { toast } from 'sonner'
 import { resolvePlaybackIds } from "@/lib/utils"
+import { useVideoLike } from "@/lib/hooks/useVideoLike"
 import { BASE_API, API_VERSION } from "../config.json"
 import MuxPlayer from '@mux/mux-player-react'
+
+const FEED_PAGE_SIZE = 6
+const PREFETCH_THRESHOLD = 2 
+const LOGIN_PROMPT_AFTER = 4 
 
 function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const playerRef = useRef(null)
   const [paused, setPaused] = useState(false)
-  const [liked, setLiked] = useState(!!video.liked)
-  const [likes, setLikes] = useState(video.likes)
-  const [showThumb, setShowThumb] = useState(false)
   const [isFollowingAuthor, setIsFollowingAuthor] = useState(false)
   const [progress, setProgress] = useState(0)
 
-  const manageLike = useCallback(() => {
-    if (requireAuth && !requireAuth()) return
-    setLiked((prev) => {
-      setShowThumb(!prev)
-      setLikes((n) => n + (prev ? -1 : 1))
-      return !prev
-    })
-
-    onInteraction('like', video.id)
-
-    const sendLike = async () => {
-      try {
-        const r = await fetch(`${BASE_API}/v${API_VERSION}/likes/${video.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } })
-        const j = await r.json()
-        if (!r.ok) {
-          toast.error(j.message || 'Like failed')
-        } else {
-          if (typeof j.likes === 'number') setLikes(j.likes)
-          toast.success(j.liked ? 'Added to liked' : 'Removed from liked')
-          onInteraction('like_state', video.id, { liked: j.liked })
-        }
-      } catch {
-        toast.error('Network error')
-      }
-    }
-    sendLike()
-  }, [video.id, onInteraction, requireAuth])
-
-  useEffect(() => {
-    setLiked(!!video.liked)
-    setLikes(video.likes)
-  }, [video.liked, video.likes, video.id])
+  const onLikeState = useCallback(
+    (isLiked) => onInteraction('like_state', video.id, { liked: isLiked }),
+    [onInteraction, video.id],
+  )
+  const { liked, likes, showThumb, toggleLike } = useVideoLike(video, { requireAuth, onLikeState })
 
   useEffect(() => {
     const loadRelationship = async () => {
@@ -71,14 +46,6 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
     }
     loadRelationship()
   }, [user, video.userId])
-
-  useEffect(() => {
-    let timer
-    if (showThumb) {
-      timer = setTimeout(() => setShowThumb(false), 1000)
-    }
-    return () => clearTimeout(timer)
-  }, [showThumb])
 
   const isOwner = user?.id && user.id === video.userId
 
@@ -94,14 +61,14 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
       const j = await r.json()
       if (!r.ok) {
         setIsFollowingAuthor(false)
-        toast.error(j.message || 'Follow failed')
+        toast.error(j.message || 'L\'abonnement a échoué')
       } else {
         setIsFollowingAuthor(!!j.following)
         toast.success(j.following ? 'Abonné' : 'Désabonné')
       }
     } catch {
       setIsFollowingAuthor(false)
-      toast.error('Network error')
+      toast.error('Erreur réseau')
     }
   }, [video.userId, requireAuth])
 
@@ -219,7 +186,7 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
         <ActionButton
           icon={ThumbsUp}
           label={likes.toLocaleString()}
-          onClick={manageLike}
+          onClick={toggleLike}
           active={liked}
           activeClassName="border-transparent bg-gradient-to-br from-violet-500 to-fuchsia-500"
           fill={liked}
@@ -296,13 +263,13 @@ export default function VideoScreen() {
         }
       }
 
-      const params = new URLSearchParams({ limit: '6' })
+      const params = new URLSearchParams({ limit: String(FEED_PAGE_SIZE) })
       if (cursorRef.current) params.set('cursor', cursorRef.current)
       const headers = token ? { 'Authorization': token } : undefined
       const response = await fetch(`${BASE_API}/v${API_VERSION}/videos?${params}`, { headers })
       const json = await response.json()
       if (!response.ok) {
-        setError(json.message || 'Impossible to fetch videos.')
+        setError(json.message || 'Impossible de charger les vidéos.')
         return
       }
 
@@ -330,7 +297,7 @@ export default function VideoScreen() {
         return [...prev, ...page.filter(v => !seen.has(v.id))]
       })
     } catch {
-      setError('Network error to load videos.')
+      setError('Erreur réseau lors du chargement des vidéos.')
     } finally {
       loadingRef.current = false
     }
@@ -366,11 +333,11 @@ export default function VideoScreen() {
       setCurrentVideoIndex(newIndex)
     }
 
-    if (newIndex >= videos.length - 2) {
+    if (newIndex >= videos.length - PREFETCH_THRESHOLD) {
       loadPage()
     }
 
-    if (!user && !promptedRef.current && newIndex >= 4) {
+    if (!user && !promptedRef.current && newIndex >= LOGIN_PROMPT_AFTER) {
       promptedRef.current = true
       setShowLoginPrompt(true)
     }

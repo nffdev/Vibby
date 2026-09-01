@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function Step3Bio({ onNext, data }) {
   const [bio, setBio] = useState(data.bio);

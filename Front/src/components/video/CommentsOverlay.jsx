@@ -31,9 +31,9 @@ export default function CommentsOverlay({ onClose, videoId, videoOwnerId, onAdde
       try {
         const r = await fetch(`${BASE_API}/v${API_VERSION}/comments/${videoId}`)
         const j = await r.json()
-        if (!r.ok) setError(j.message || 'Unable to load comments')
+        if (!r.ok) setError(j.message || 'Impossible de charger les commentaires')
         else setComments(Array.isArray(j) ? j : [])
-      } catch { setError('Network error') }
+      } catch { setError('Erreur réseau') }
       finally { setLoading(false) }
     }
     load()
@@ -47,7 +47,7 @@ export default function CommentsOverlay({ onClose, videoId, videoOwnerId, onAdde
 
   const send = async () => {
     const token = localStorage.getItem('token')
-    if (!token) { toast.error('You must be logged in'); return }
+    if (!token) { toast.error('Vous devez être connecté'); return }
     const payload = text.trim()
     if (!payload || sending) return
     setSending(true)
@@ -55,34 +55,34 @@ export default function CommentsOverlay({ onClose, videoId, videoOwnerId, onAdde
       const r = await fetch(`${BASE_API}/v${API_VERSION}/comments/${videoId}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': token }, body: JSON.stringify({ text: payload }) })
       const j = await r.json()
       if (!r.ok) {
-        toast.error(j.message || 'Send failed')
+        toast.error(j.message || 'L\'envoi a échoué')
       } else {
         setComments(prev => [...prev, j])
         setText('')
         onAdded && onAdded()
         requestAnimationFrame(() => listEndRef.current?.scrollIntoView({ behavior: 'smooth' }))
       }
-    } catch { toast.error('Network error') }
+    } catch { toast.error('Erreur réseau') }
     finally { setSending(false) }
   }
 
   const removeOne = async (id) => {
     const token = localStorage.getItem('token')
-    if (!token) { toast.error('You must be logged in'); return }
+    if (!token) { toast.error('Vous devez être connecté'); return }
     try {
       const r = await fetch(`${BASE_API}/v${API_VERSION}/comments/${id}`, { method: 'DELETE', headers: { 'Authorization': token } })
       const j = await r.json()
       if (!r.ok) {
-        toast.error(j.message || 'Delete failed')
+        toast.error(j.message || 'La suppression a échoué')
       } else {
         setComments(prev => {
           const next = prev.filter(c => c.id !== id)
           onCount && onCount(next.length)
           return next
         })
-        toast.success('Comment deleted')
+        toast.success('Commentaire supprimé')
       }
-    } catch { toast.error('Network error') }
+    } catch { toast.error('Erreur réseau') }
   }
 
   const canDelete = (comment) =>
