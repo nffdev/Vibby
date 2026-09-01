@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Search, Loader2, Play, User } from 'lucide-react'
 import { BASE_API, API_VERSION } from '../../config.json'
 
+const SEARCH_DEBOUNCE_MS = 350 
+const SEARCH_MIN_CHARS = 2 
+
 export default function SearchPopover() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -18,7 +21,7 @@ export default function SearchPopover() {
 
   useEffect(() => {
     const query = q.trim()
-    if (query.length < 2) {
+    if (query.length < SEARCH_MIN_CHARS) {
       setResults({ videos: [], users: [] })
       setLoading(false)
       return
@@ -34,7 +37,7 @@ export default function SearchPopover() {
         if (r.ok) setResults({ videos: j.videos || [], users: j.users || [] })
       } catch {}
       if (id === reqId.current) setLoading(false)
-    }, 350)
+    }, SEARCH_DEBOUNCE_MS)
 
     return () => clearTimeout(timer)
   }, [q])

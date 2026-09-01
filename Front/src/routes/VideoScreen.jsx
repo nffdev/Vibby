@@ -16,6 +16,10 @@ import { resolvePlaybackIds } from "@/lib/utils"
 import { BASE_API, API_VERSION } from "../config.json"
 import MuxPlayer from '@mux/mux-player-react'
 
+const FEED_PAGE_SIZE = 6
+const PREFETCH_THRESHOLD = 2 
+const LOGIN_PROMPT_AFTER = 4 
+
 function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -296,7 +300,7 @@ export default function VideoScreen() {
         }
       }
 
-      const params = new URLSearchParams({ limit: '6' })
+      const params = new URLSearchParams({ limit: String(FEED_PAGE_SIZE) })
       if (cursorRef.current) params.set('cursor', cursorRef.current)
       const headers = token ? { 'Authorization': token } : undefined
       const response = await fetch(`${BASE_API}/v${API_VERSION}/videos?${params}`, { headers })
@@ -366,11 +370,11 @@ export default function VideoScreen() {
       setCurrentVideoIndex(newIndex)
     }
 
-    if (newIndex >= videos.length - 2) {
+    if (newIndex >= videos.length - PREFETCH_THRESHOLD) {
       loadPage()
     }
 
-    if (!user && !promptedRef.current && newIndex >= 4) {
+    if (!user && !promptedRef.current && newIndex >= LOGIN_PROMPT_AFTER) {
       promptedRef.current = true
       setShowLoginPrompt(true)
     }

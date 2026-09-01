@@ -9,6 +9,9 @@ import BottomNav from '@/components/nav/BottomNav'
 import { ArrowLeft, Search as SearchIcon, Loader2, User, Play } from 'lucide-react'
 import { BASE_API, API_VERSION } from '../config.json'
 
+const SEARCH_DEBOUNCE_MS = 350 
+const SEARCH_MIN_CHARS = 2 
+
 export default function Search() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -22,7 +25,7 @@ export default function Search() {
 
     setSearchParams(query ? { q: query } : {}, { replace: true })
 
-    if (query.length < 2) {
+    if (query.length < SEARCH_MIN_CHARS) {
       setResults({ videos: [], users: [] })
       setLoading(false)
       return
@@ -38,7 +41,7 @@ export default function Search() {
         if (r.ok) setResults({ videos: j.videos || [], users: j.users || [] })
       } catch {}
       if (id === reqId.current) setLoading(false)
-    }, 350)
+    }, SEARCH_DEBOUNCE_MS)
 
     return () => clearTimeout(timer)
   }, [q])
