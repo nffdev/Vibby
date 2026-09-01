@@ -9,6 +9,7 @@ const VIEWED_PENALTY = 0.1;
 const MAX_FOLLOWED = 2000; 
 const MAX_VIEWED = 5000; 
 const ANON_JITTER = 0.3; 
+const RECENCY_WINDOW_DAYS = 14; 
 
 function encodeCursor(cursor) {
     return Buffer.from(JSON.stringify(cursor)).toString('base64url');
@@ -21,6 +22,7 @@ function decodeCursor(str) {
             return null;
         }
         parsed.seed = (typeof parsed.seed === 'number' && parsed.seed > 0) ? parsed.seed : null;
+        parsed.nw = parsed.nw === true;
         return parsed;
     } catch {
         return null;
@@ -38,6 +40,7 @@ module.exports = {
     MAX_FOLLOWED,
     MAX_VIEWED,
     ANON_JITTER,
+    RECENCY_WINDOW_DAYS,
     encodeCursor,
     decodeCursor,
 };
