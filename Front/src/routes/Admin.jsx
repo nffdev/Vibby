@@ -47,6 +47,7 @@ export default function Admin() {
 
   useEffect(() => {
     const check = async () => {
+      if (!token()) { setIsAdmin(false); setChecking(false); return }
       try {
         const r = await fetch(`${BASE_API}/v${API_VERSION}/admin/me`, { headers: { Authorization: token() } })
         const j = await r.json()
