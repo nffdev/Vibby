@@ -57,7 +57,8 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
 
   useEffect(() => {
     setLiked(!!video.liked)
-  }, [video.liked, video.id])
+    setLikes(video.likes)
+  }, [video.liked, video.likes, video.id])
 
   useEffect(() => {
     const loadRelationship = async () => {
@@ -80,6 +81,29 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
   }, [showThumb])
 
   const isOwner = user?.id && user.id === video.userId
+
+  const manageFollow = useCallback(async () => {
+    if (requireAuth && !requireAuth()) return
+    if (!video.userId) return
+    setIsFollowingAuthor(true) 
+    try {
+      const r = await fetch(`${BASE_API}/v${API_VERSION}/follows/${video.userId}`, {
+        method: 'POST',
+        headers: { 'Authorization': localStorage.getItem('token') },
+      })
+      const j = await r.json()
+      if (!r.ok) {
+        setIsFollowingAuthor(false)
+        toast.error(j.message || 'Follow failed')
+      } else {
+        setIsFollowingAuthor(!!j.following)
+        toast.success(j.following ? 'Abonné' : 'Désabonné')
+      }
+    } catch {
+      setIsFollowingAuthor(false)
+      toast.error('Network error')
+    }
+  }, [video.userId, requireAuth])
 
   const togglePlay = useCallback(() => {
     const player = playerRef.current
@@ -189,7 +213,7 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
 
       <div className="absolute right-2 sm:right-4 md:right-6 bottom-24 sm:bottom-28 md:bottom-32 z-10 flex flex-col items-center gap-4 sm:gap-5">
         {!isOwner && !isFollowingAuthor && (
-          <ActionButton icon={UserPlus} label="Suivre" />
+          <ActionButton icon={UserPlus} label="Suivre" onClick={manageFollow} />
         )}
 
         <ActionButton
