@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,13 @@ export default function CommentsOverlay({ onClose, videoId, videoOwnerId, onAdde
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const listEndRef = useRef(null)
+  const navigate = useNavigate()
   const { user } = useAuth()
+
+  const goToProfile = (c) => {
+    onClose()
+    navigate(c.username ? `/profile?u=${c.username}` : `/profile?id=${c.userId}`)
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -68,9 +75,11 @@ export default function CommentsOverlay({ onClose, videoId, videoOwnerId, onAdde
       if (!r.ok) {
         toast.error(j.message || 'Delete failed')
       } else {
-        setComments(prev => prev.filter(c => c.id !== id))
-        const n = comments.length - 1
-        onCount && onCount(n >= 0 ? n : 0)
+        setComments(prev => {
+          const next = prev.filter(c => c.id !== id)
+          onCount && onCount(next.length)
+          return next
+        })
         toast.success('Comment deleted')
       }
     } catch { toast.error('Network error') }
@@ -82,7 +91,6 @@ export default function CommentsOverlay({ onClose, videoId, videoOwnerId, onAdde
       (videoOwnerId && String(user.id) === String(videoOwnerId))
     )
 
-  const profileLink = (c) => c.username ? `/profile?u=${c.username}` : `/profile?id=${c.userId}`
 
   return (
     <motion.div
@@ -130,21 +138,21 @@ export default function CommentsOverlay({ onClose, videoId, videoOwnerId, onAdde
           <>
             {comments.map((c, i) => (
               <div key={c.id || i} className="group flex gap-3">
-                <a href={profileLink(c)} className="shrink-0">
+                <button type="button" onClick={() => goToProfile(c)} className="shrink-0">
                   <Avatar className="h-9 w-9 border border-white/10">
                     <AvatarImage src={c.avatar || '/placeholder.svg'} />
                     <AvatarFallback className="bg-white/10 text-xs font-medium text-white/70">
                       {(c.name || c.username || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                </a>
+                </button>
                 <div className="min-w-0 flex-1">
-                  <a href={profileLink(c)} className="inline-flex items-baseline gap-2 hover:underline">
+                  <button type="button" onClick={() => goToProfile(c)} className="inline-flex items-baseline gap-2 hover:underline">
                     <span className="text-sm font-medium">{c.name || c.username || 'User'}</span>
                     {c.username && (
                       <span className="text-xs text-white/35">@{c.username}</span>
                     )}
-                  </a>
+                  </button>
                   <p className="mt-1 break-words text-sm leading-relaxed text-white/70">{c.text}</p>
                 </div>
                 {canDelete(c) && (
