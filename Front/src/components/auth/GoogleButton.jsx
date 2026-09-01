@@ -48,9 +48,9 @@ export default function GoogleButton({ onError, label = "Continuer avec Google" 
                     window.location.replace("/videoscreen");
                     return;
                 }
-                onError?.(json.message || "Google sign-in failed.");
+                onError?.(json.message || "La connexion Google a échoué.");
             } catch {
-                onError?.("Google sign-in failed.");
+                onError?.("La connexion Google a échoué.");
             }
             setLoading(false);
         };
@@ -83,7 +83,7 @@ export default function GoogleButton({ onError, label = "Continuer avec Google" 
         return (
             <button
                 type="button"
-                onClick={() => onError?.("Google sign-in n'est pas encore configuré.")}
+                onClick={() => onError?.("La connexion Google n'est pas encore configurée.")}
                 className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-medium text-white/80 backdrop-blur-md transition-colors hover:bg-white/[0.08]"
             >
                 <GoogleIcon />

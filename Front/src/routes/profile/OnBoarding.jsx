@@ -68,7 +68,7 @@ export default function App() {
       window.location.replace('/videoscreen');
     } catch (error) {
       console.error('Error creating profile:', error);
-      alert(error?.message || 'Failed to complete onboarding. Please try again.');
+      alert(error?.message || 'Impossible de finaliser l\'inscription. Réessaie.');
     }
   }
 

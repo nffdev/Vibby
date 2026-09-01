@@ -13,10 +13,10 @@ export default function Register() {
     const [loading, setLoading] = useState(false);
 
     async function register() {
-        if (!datas.email) return setError("Email is required.");
-        if (!datas.password) return setError("Password is required.");
-        if (!datas.confirmPassword) return setError("Password confirmation is required.");
-        if (datas.password !== datas.confirmPassword) return setError("Passwords are not matching.");
+        if (!datas.email) return setError("L'email est requis.");
+        if (!datas.password) return setError("Le mot de passe est requis.");
+        if (!datas.confirmPassword) return setError("La confirmation du mot de passe est requise.");
+        if (datas.password !== datas.confirmPassword) return setError("Les mots de passe ne correspondent pas.");
 
         setError("");
         setLoading(true);
@@ -34,9 +34,9 @@ export default function Register() {
                 window.location.replace("/profile/onboarding");
                 return;
             }
-            setError(json.message || "An error occurred.");
+            setError(json.message || "Une erreur est survenue.");
         } catch {
-            setError("An error occurred.");
+            setError("Une erreur est survenue.");
         }
         setLoading(false);
     }

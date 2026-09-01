@@ -28,10 +28,10 @@ export default function UploadPage() {
     e.preventDefault()
     setError('')
 
-    if (!title.trim()) return setError('Title is required.')
-    if (!description.trim()) return setError('Description is required.')
-    if (!data?.id) return setError('Upload URL unavailable at the moment. Please try again later.')
-    if (!uploadCompleted) return setError('Upload the video first.')
+    if (!title.trim()) return setError('Le titre est requis.')
+    if (!description.trim()) return setError('La description est requise.')
+    if (!data?.id) return setError('URL d\'upload indisponible pour le moment. Réessaie plus tard.')
+    if (!uploadCompleted) return setError('Envoie d\'abord la vidéo.')
 
     setIsSubmitting(true)
     try {
@@ -45,12 +45,12 @@ export default function UploadPage() {
       })
       const json = await response.json()
       if (!response.ok) {
-        setError(json.message || 'An error occurred.')
+        setError(json.message || 'Une erreur est survenue.')
       } else {
         navigate(-1)
       }
     } catch {
-      setError('Impossible to upload the video at the moment.')
+      setError('Impossible d\'envoyer la vidéo pour le moment.')
     } finally {
       setIsSubmitting(false)
     }
@@ -85,7 +85,7 @@ export default function UploadPage() {
             <MuxUploader
               endpoint={data?.url || ''}
               onSuccess={() => setUploadCompleted(true)}
-              onUploadError={() => setError('Failed to upload the video.')}
+              onUploadError={() => setError('L\'envoi de la vidéo a échoué.')}
             />
             {uploadCompleted && (
               <div className="mt-3 flex items-center gap-2 text-sm text-emerald-400">

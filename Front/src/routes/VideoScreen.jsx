@@ -46,14 +46,14 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
         const r = await fetch(`${BASE_API}/v${API_VERSION}/likes/${video.id}`, { method: 'POST', headers: { 'Authorization': localStorage.getItem('token') } })
         const j = await r.json()
         if (!r.ok) {
-          toast.error(j.message || 'Like failed')
+          toast.error(j.message || 'Le like a échoué')
         } else {
           if (typeof j.likes === 'number') setLikes(j.likes)
-          toast.success(j.liked ? 'Added to liked' : 'Removed from liked')
+          toast.success(j.liked ? 'Ajouté aux likes' : 'Retiré des likes')
           onInteraction('like_state', video.id, { liked: j.liked })
         }
       } catch {
-        toast.error('Network error')
+        toast.error('Erreur réseau')
       }
     }
     sendLike()
@@ -98,14 +98,14 @@ function VideoPlayer({ video, muted, requireAuth, onInteraction, onDeleted }) {
       const j = await r.json()
       if (!r.ok) {
         setIsFollowingAuthor(false)
-        toast.error(j.message || 'Follow failed')
+        toast.error(j.message || 'L\'abonnement a échoué')
       } else {
         setIsFollowingAuthor(!!j.following)
         toast.success(j.following ? 'Abonné' : 'Désabonné')
       }
     } catch {
       setIsFollowingAuthor(false)
-      toast.error('Network error')
+      toast.error('Erreur réseau')
     }
   }, [video.userId, requireAuth])
 
@@ -306,7 +306,7 @@ export default function VideoScreen() {
       const response = await fetch(`${BASE_API}/v${API_VERSION}/videos?${params}`, { headers })
       const json = await response.json()
       if (!response.ok) {
-        setError(json.message || 'Impossible to fetch videos.')
+        setError(json.message || 'Impossible de charger les vidéos.')
         return
       }
 
@@ -334,7 +334,7 @@ export default function VideoScreen() {
         return [...prev, ...page.filter(v => !seen.has(v.id))]
       })
     } catch {
-      setError('Network error to load videos.')
+      setError('Erreur réseau lors du chargement des vidéos.')
     } finally {
       loadingRef.current = false
     }

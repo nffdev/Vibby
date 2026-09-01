@@ -38,7 +38,7 @@ export default function VideoWatch() {
         const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${id}/resolve`, { headers: { 'Authorization': localStorage.getItem('token') } })
         const j = await r.json()
         if (!r.ok) {
-          setError(j.message || 'Impossible to load the video.')
+          setError(j.message || 'Impossible de charger la vidéo.')
           return
         }
 
@@ -68,7 +68,7 @@ export default function VideoWatch() {
           if (rc.ok && jc && typeof jc === 'object') setCommentCount(Number(jc[j.id] || 0))
         } catch {}
       } catch {
-        setError('Network error while loading the video.')
+        setError('Erreur réseau lors du chargement de la vidéo.')
       } finally {
         setLoading(false)
       }
@@ -98,13 +98,13 @@ export default function VideoWatch() {
       })
       const j = await r.json()
       if (!r.ok) {
-        toast.error(j.message || 'Like failed')
+        toast.error(j.message || 'Le like a échoué')
         return
       }
       if (typeof j.likes === 'number') setLikes(j.likes)
-      toast.success(j.liked ? 'Added to liked' : 'Removed from liked')
+      toast.success(j.liked ? 'Ajouté aux likes' : 'Retiré des likes')
     } catch {
-      toast.error('Network error')
+      toast.error('Erreur réseau')
     }
   }, [video])
 

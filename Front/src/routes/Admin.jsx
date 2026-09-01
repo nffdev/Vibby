@@ -95,7 +95,7 @@ export default function Admin() {
       if (!r.ok) { toast.error('Action échouée'); return }
       toast.success('Compte débanni')
       setBannedUsers((prev) => prev.filter((u) => u.id !== userId))
-    } catch { toast.error('Network error') }
+    } catch { toast.error('Erreur réseau') }
   }
 
   const resolve = async (id, action) => {
@@ -109,7 +109,7 @@ export default function Admin() {
       const messages = { reviewed: 'Marqué traité', dismissed: 'Ignoré', pending: 'Action annulée' }
       toast.success(messages[action] || 'Mis à jour')
       setReports((prev) => prev.filter((rep) => rep.id !== id))
-    } catch { toast.error('Network error') }
+    } catch { toast.error('Erreur réseau') }
   }
 
   const deleteVideo = async (videoId) => {
@@ -121,7 +121,7 @@ export default function Admin() {
       if (!r.ok) { toast.error('Suppression échouée'); return }
       toast.success('Vidéo supprimée')
       setReports((prev) => prev.filter((rep) => rep.video?.id !== videoId))
-    } catch { toast.error('Network error') }
+    } catch { toast.error('Erreur réseau') }
     finally { setConfirmVideo(null) }
   }
 
@@ -135,7 +135,7 @@ export default function Admin() {
       if (!r.ok) { toast.error(j.message || 'Bannissement échoué'); return }
       toast.success('Utilisateur banni')
       setReports((prev) => prev.filter((rep) => rep.video?.userId !== userId))
-    } catch { toast.error('Network error') }
+    } catch { toast.error('Erreur réseau') }
     finally { setConfirmBan(null) }
   }
 

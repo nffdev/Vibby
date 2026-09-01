@@ -18,13 +18,13 @@ export default function VideoActionMenu({ videoId, isOwner, onDeleted, triggerCl
       const r = await fetch(`${BASE_API}/v${API_VERSION}/videos/${videoId}`, { method: 'DELETE', headers: { 'Authorization': localStorage.getItem('token') } })
       const j = await r.json()
       if (!r.ok) {
-        toast.error(j.message || 'Delete failed')
+        toast.error(j.message || 'La suppression a échoué')
       } else {
-        toast.success('Video deleted')
+        toast.success('Vidéo supprimée')
         onDeleted && onDeleted(videoId)
       }
     } catch {
-      toast.error('Network error')
+      toast.error('Erreur réseau')
     }
     close()
   }
