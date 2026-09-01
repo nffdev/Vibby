@@ -155,6 +155,8 @@ const resolveVideo = async (req, res) => {
         return res.status(200).json(toPublicVideo(video));
     }
 
+    if (!req.user) return res.status(401).json({ message: 'Authentication required.' });
+
     try {
         if (!MUX_TOKEN_ID || !MUX_TOKEN_SECRET) return res.status(500).json({ message: 'MUX credentials missing.' });
 
