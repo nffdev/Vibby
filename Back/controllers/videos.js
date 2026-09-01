@@ -6,7 +6,7 @@ const Follow = require('../models/Follow');
 const View = require('../models/View');
 const {
     LAMBDA, LIKE_WEIGHT, COMMENT_WEIGHT, VIEW_WEIGHT, BASE_FLOOR, FOLLOW_BOOST, VIEWED_PENALTY,
-    MAX_FOLLOWED, MAX_VIEWED, ANON_JITTER,
+    MAX_FOLLOWED, MAX_VIEWED, ANON_JITTER, RECENCY_WINDOW_DAYS,
     encodeCursor, decodeCursor,
 } = require('../utils/feedRanking');
 const { publicVideoProjection, toPublicVideo } = require('../utils/publicVideo');
@@ -58,6 +58,8 @@ const listVideos = async (req, res) => {
         const anon = !req.user;
         const seed = anon ? (cursor && typeof cursor.seed === 'number' ? cursor.seed : Math.floor(Math.random() * 1e9) + 1) : 0;
 
+        const recencyFloor = new Date(nowMs - RECENCY_WINDOW_DAYS * 24 * 3600 * 1000);
+
         // score = (BASE_FLOOR + LIKE_WEIGHT*ln(1+likes) + COMMENT_WEIGHT*ln(1+comments))
         //         * exp(-LAMBDA * ageHours) * (isFollowed ? FOLLOW_BOOST : 1)
         const scoreExpr = {
@@ -100,29 +102,36 @@ const listVideos = async (req, res) => {
             },
         };
 
-        const pipeline = [
-            { $match: { playback_id: { $exists: true, $ne: null }, status: 'ready' } },
-            { $addFields: { score: scoreExpr } },
-        ];
+        const buildPipeline = (withWindow) => {
+            const match = { status: 'ready', playback_id: { $exists: true, $ne: null } };
+            if (withWindow) match.createdAt = { $gte: recencyFloor };
+            const p = [{ $match: match }, { $addFields: { score: scoreExpr } }];
+            if (cursor) {
+                p.push({
+                    $match: {
+                        $or: [
+                            { score: { $lt: cursor.score } },
+                            { score: cursor.score, id: { $gt: cursor.id } },
+                        ],
+                    },
+                });
+            }
+            p.push(
+                { $sort: { score: -1, id: 1 } },
+                { $limit: limit + 1 },
+                { $project: publicVideoProjection(['commentCount', 'score']) },
+            );
+            return p;
+        };
 
-        if (cursor) {
-            pipeline.push({
-                $match: {
-                    $or: [
-                        { score: { $lt: cursor.score } },
-                        { score: cursor.score, id: { $gt: cursor.id } },
-                    ],
-                },
-            });
+        let windowed = !(cursor && cursor.nw === true);
+
+        let rows = await Video.aggregate(buildPipeline(windowed)).allowDiskUse(true);
+
+        if (windowed && !cursor && rows.length <= limit) {
+            windowed = false;
+            rows = await Video.aggregate(buildPipeline(false)).allowDiskUse(true);
         }
-
-        pipeline.push(
-            { $sort: { score: -1, id: 1 } },
-            { $limit: limit + 1 },
-            { $project: publicVideoProjection(['commentCount', 'score']) },
-        );
-
-        const rows = await Video.aggregate(pipeline);
 
         const hasMore = rows.length > limit;
         const items = hasMore ? rows.slice(0, limit) : rows;
@@ -137,6 +146,7 @@ const listVideos = async (req, res) => {
             const last = items[items.length - 1];
             const payload = { ts: nowMs, score: last.score, id: last.id };
             if (anon) payload.seed = seed;
+            if (!windowed) payload.nw = true;
             nextCursor = encodeCursor(payload);
         }
 
